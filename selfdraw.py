@@ -73,6 +73,12 @@ def on_draw():
     for flow in flows:
         flow.draw()
 
+# dictionary of arrow key mappings to coordinate changes
+keys = {    pyglet.window.key.LEFT: [ -1, 0 ],
+            pyglet.window.key.RIGHT: [ 1, 0 ],
+            pyglet.window.key.DOWN: [ 0, -1 ],
+            pyglet.window.key.UP: [ 0, 1 ]  }
+
 # control drawing with the keyboard
 @window.event
 def on_key_press(symbol, modifiers):
@@ -80,7 +86,7 @@ def on_key_press(symbol, modifiers):
 
     next_cell = cursor_cell
 
-    # print(cursor_cell, cellFlow(cursor_cell), cellInGrid(cursor_cell, grid))
+    print(cursor_cell, cellFlow(cursor_cell))
 
     # press the spacebar to start drawing a flow; press it again to stop
     if symbol == pyglet.window.key.SPACE:
@@ -104,34 +110,36 @@ def on_key_press(symbol, modifiers):
 
     # press the backspace key on a flow (or while drawing a flow) to delete it
     elif symbol == pyglet.window.key.BACKSPACE and cellFlow(cursor_cell) > -1:
-        assign = cellFlow(cursor_cell)
+        flow_index = cellFlow(cursor_cell)
+
         condition1 = flow_selected is True
-        condition2 = flow_selected is False and assign > -1
+        condition2 = flow_selected is False and flow_index > -1
+
+        # delete either the current flow being drawn or a finished flow
         if condition1 or condition2:
             # update the cells[] record of which flow belongs to each cell
             for i in range(GRID_SIZE):
                 for j in range(GRID_SIZE):
-                    flow_index = cellFlow([i, j])
-                    if flow_index > assign:
+                    if cells[i][j] > flow_index:
                         cells[i][j] = cells[i][j] - 1
-                    if flow_index == assign:
+                        
+                    if cells[i][j] == flow_index:
                         cells[i][j] = -1
 
-            flow_object = flows.pop(assign)
+            # delete the Flow object
+            flow_object = flows.pop(flow_index)
             del flow_object
 
+            # update the number of Flows if needed
             if condition2:
                 n_flow = n_flow - 1
 
             flow_selected = False
 
-    keys = {    pyglet.window.key.LEFT: [ -1, 0 ],
-                pyglet.window.key.RIGHT: [ 1, 0 ],
-                pyglet.window.key.DOWN: [ 0, -1 ],
-                pyglet.window.key.UP: [ 0, 1 ]  }
+
 
     # move the cursor and flows with the arrow keys
-    if symbol in keys.keys():
+    elif symbol in keys.keys():
         next_cell = [ cursor_cell[0] + keys[symbol][0], cursor_cell[1] + keys[symbol][1] ]
 
         # if a flow is being drawn, add this next (empty, within the grid) cell to it

@@ -23,7 +23,7 @@ grid_tests = [  grid.Grid(  [ 50, 400 ],
                             alpha = True,
                             thickness = 2.0 ),
 
-                grid.Grid(  [ 750, 50 ],
+                grid.Grid(  [ 750, 50 ],    # TODO: need to update Grid so it resizes with the window
                             150,
                             300,
                             6,
@@ -32,7 +32,18 @@ grid_tests = [  grid.Grid(  [ 50, 400 ],
                             thickness = 5.0,
                             label = True,
                             alpha = True,
-                            labelColor = (0, 0, 255, 255)   ),  ]
+                            labelColor = (0, 0, 255, 255)   ),
+
+                grid.Grid(  [ 350, 350 ],
+                            275,
+                            150,
+                            4,
+                            7,
+                            color = (150, 75, 250),
+                            labelColor = (255, 0, 0, 150),
+                            alpha = True,
+                            label = True,
+                            thickness = 10.5 )   ]
 
 # [ vertex_list, drawing_mode ]
 graphics_tests = [ [        graphics.generateCircle(    [ 100, 300 ],

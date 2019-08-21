@@ -47,6 +47,9 @@ class Grid:
         # create the batch of vertex lists used to draw the grid
         grid = pyglet.graphics.Batch()
 
+        # TODO: the top and bottom horizontal lines should be treated specially;
+        #       grids with thick lines appear to miss their corners
+
         # generate all the horizontal lines in the grid
         for i in range(rows + 1):
             # calculate the number of empty pixels between each row's grid line
@@ -76,16 +79,20 @@ class Grid:
         See class docstring for parameters
         """
 
+        # TODO: width and height should vary with window size (if window has been
+        #       resized, find by what ratios and multiply the existing grid width
+        #       and height by them)
+
         self.origin = origin
-        self.width = width
-        self.height = height
+        self.width = width      # TODO: need to adjust for thickness
+        self.height = height    # TODO: need to adjust for thickness
         self.rows = rows
         self.cols = cols
         self.color = color
         self.thickness = thickness
 
         # get the batch of the grid for drawing
-        self.batch = Grid.generateGrid(self.origin, self.width, self.height, self.rows, self.cols, self.color, self.thickness)
+        self.batch = Grid.generateGrid(self.origin, self.width, self.height, self.rows, self.cols, color=self.color, thickness=self.thickness)
 
         # get the batch of grid labels, if requested (otherwise labelBatch is None)
         self.label = label
@@ -148,11 +155,16 @@ class Grid:
         horizontal_space = float(self.width) / self.cols
         vertical_space = float(self.height) / self.rows
 
-        col_pos = self.getCellCenter([0, self.rows - 1])
-        col_pos[1] = col_pos[1] + vertical_space
+        # shortest distance between the edge of the grid and the label
+        label_space = min(horizontal_space, vertical_space) / 4
 
+        # find the position of the first column label, taking line thickness into account
+        col_pos = self.getCellCenter([0, self.rows - 1])
+        col_pos[1] = col_pos[1] + 0.5 * vertical_space + self.thickness + label_space
+
+        # find the position of the first row label, taking line thickness into account
         row_pos = self.getCellCenter([0, 0])
-        row_pos[0] = row_pos[0] - horizontal_space
+        row_pos[0] = row_pos[0] - 0.5 * horizontal_space - self.thickness - label_space
 
         # create labels for the columns
         for i in range(self.cols):

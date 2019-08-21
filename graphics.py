@@ -96,6 +96,29 @@ def generateCircle(center, radius, num_points, color=(255, 255, 255), fill=False
                     ('v2f', vertices),
                     ('c3B', color * (num_points + 1)))
 
+def moveCircle(circle, center, next_center):
+    """
+    translate an existing circle's center to a new center (and the circle with it)
+
+    @param circle       :   vertex list of circle
+    @param center       :   2-tuple of x- and y-coordinates for the circle's current center
+    @param next_center  :   2-tuple of x- and y-coordinates for the circle's new center
+    """
+
+    # get the changes in the (x, y) position between the centers
+    deltaX = next_center[0] - center[0]
+    deltaY = next_center[1] - center[1]
+
+    # add the changes to all the vertices' (x, y) positions in the circle
+    for i in range(len(circle.vertices)):
+        # even indices in the vertices list are x-coordinate values; odd
+        # indices are y-coordinate values
+        if i % 2 == 0:
+            circle.vertices[i] = circle.vertices[i] + deltaX
+        else:
+            circle.vertices[i] = circle.vertices[i] + deltaY
+
+
 def generateRectangle(origin, width, height, color=(255, 255, 255), fill=False, batch=None):
     """
     generate the vertex list needed to draw a rectangle

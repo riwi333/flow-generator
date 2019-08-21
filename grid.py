@@ -20,6 +20,12 @@ class Grid:
     @attribute  label       :   boolean of whether rows and columns of the grid should be labelled (False)
     @attribute  alpha       :   boolean of whether columns should be labelled with letters A-Z or not (False)
     @attribute  labelColor  :   4-tuple of RGBA value to color row/colum labels with (255, 255, 255, 255)
+
+    internal attributes:
+    -------------------
+    @attribute  batch       :   batch of all lines generated to create grid
+    @attribute  labelBatch  :   batch of all labels generated for the grid
+                                (None if the grid is unlabelled)
     """
 
     @staticmethod
@@ -84,7 +90,8 @@ class Grid:
         # get the batch of grid labels, if requested (otherwise labelBatch is None)
         self.label = label
         self.alpha = alpha
-        self.labelBatch = self.generateLabels(labelColor)
+        self.labelColor = labelColor
+        self.labelBatch = self.generateLabels(self.labelColor)
 
     def draw(self):
         """
@@ -98,18 +105,17 @@ class Grid:
         if self.label is True:
             self.labelBatch.draw()
 
-    def getCellCenter(self, row, col):
+    def getCellCenter(self, cell):
         """
-        get the coordinates of the center of the cell at (row, col)
+        get the coordinates of the center of the cell at (col, row)
 
-        @param row  :   row of the cell (0-indexed)
-        @param col  :   column of the cell (0-indexed)
+        @param cell :   2-tuple of 0-indexed (column, row) pair
 
         @return     :   2-tuple of x- and y-coordinates of the cell's center in the window
         """
 
-        center_x = self.origin[0] + float(self.width) / self.cols * (col + 0.5)
-        center_y = self.origin[1] + float(self.height) / self.rows * (row + 0.5)
+        center_x = self.origin[0] + float(self.width) / self.cols * (cell[0] + 0.5)
+        center_y = self.origin[1] + float(self.height) / self.rows * (cell[1] + 0.5)
 
         return [ center_x, center_y ]
 
@@ -142,10 +148,10 @@ class Grid:
         horizontal_space = float(self.width) / self.cols
         vertical_space = float(self.height) / self.rows
 
-        col_pos = self.getCellCenter(self.rows - 1, 0)
+        col_pos = self.getCellCenter([0, self.rows - 1])
         col_pos[1] = col_pos[1] + vertical_space
 
-        row_pos = self.getCellCenter(0, 0)
+        row_pos = self.getCellCenter([0, 0])
         row_pos[0] = row_pos[0] - horizontal_space
 
         # create labels for the columns
@@ -186,21 +192,20 @@ class Grid:
 
         return labelBatch
 
-    def getCellLabel(self, row, col):
+    def getCellLabel(self, cell):
         """
         get the text of the label for this cell
 
-        @param row      :   row of the cell
-        @param column   :   column of the cell
+        @param cell     : 2-tuple of 0-indexed (column, row) pair
 
-        @return         :   text of the label covering cell (row, col); if there
+        @return         :   text of the label covering cell (col, row); if there
                             is no label, an empty string is returned
         """
         if not self.label is True:
             return ""
 
         elif self.alpha is True:
-            return chr(65 + col) + str(row + 1)
+            return chr(65 + cell[0]) + str(cell[1] + 1)
 
         else:
-            return str(col + 1) + "-" + str(row + 1)
+            return str(cell[0] + 1) + "-" + str(cell[1] + 1)

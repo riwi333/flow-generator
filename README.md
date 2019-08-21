@@ -1,1 +1,1 @@
-# FlowGenerator
+# flow-generator

@@ -26,6 +26,7 @@ class Grid:
     @attribute  batch       :   batch of all lines generated to create grid
     @attribute  labelBatch  :   batch of all labels generated for the grid
                                 (None if the grid is unlabelled)
+    @attribute  values      :   optional mapping of grid cells to some set of values
     """
 
     @staticmethod
@@ -99,6 +100,12 @@ class Grid:
         self.alpha = alpha
         self.labelColor = labelColor
         self.labelBatch = self.generateLabels(self.labelColor)
+
+        # initialize the cell-value mapping (all un-assigned by being set to None)
+        self.values = {}
+        for i in range(self.cols):
+            for j in range(self.rows):
+                self.values[ [i, j] ] = None
 
     def draw(self):
         """

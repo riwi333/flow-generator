@@ -2,227 +2,154 @@ import pyglet
 import graphics as graphics
 from grid import Grid
 from flow import Flow
-from random import random, seed, shuffle
+from random import random, shuffle
 from datetime import datetime
 from math import floor, ceil
 
 """
-randomly generate solved flow puzzles
+functions for handling flow generation
 
 """
 
-WINDOW_WIDTH = 960
-WINDOW_HEIGHT = 540
-GRID_SIZE = 5
+# constants for mapping directions to numbers
+LEFT_DIRECTION = 0
+DOWN_DIRECTION = 1
+RIGHT_DIRECTION = 2
+UP_DIRECTION = 3
 
-# functions to add length to current coordinates depending on direction
-add = [     lambda x, y   : [x - 1, y],
-            lambda x, y   : [x, y - 1],
-            lambda x, y   : [x + 1, y],
-            lambda x, y   : [x, y + 1]    ]
+# lambda functions to produce adjacent cell coordinates depending on direction
+# x is the column of the cell, and y is the row
+next = {
+    LEFT_DIRECTION  :   lambda x, y   : [x - 1, y],
+    DOWN_DIRECTION  :   lambda x, y   : [x, y - 1],
+    RIGHT_DIRECTION :   lambda x, y   : [x + 1, y],
+    UP_DIRECTION    :   lambda x, y   : [x, y + 1]
+}
 
-LEFT = 0
-DOWN = 1
-RIGHT = 2
-UP = 3
+def isEmpty(grid, cell):
+    """
+    determine if this cell is occupied by a flow or not
 
-cells = [ [ -1 for y in range(GRID_SIZE) ] for x in range(GRID_SIZE) ]
+    @param  grid    :   grid of the cell
+    @param  cell    :   2-tuple of 0-indexed (column, row) pair
 
-# return the index of the flow at this cell
-def cellFlow(cell):
-    return cells[ cell[0] ][ cell[1] ]
+    @return         :   boolean of whether cell is not occupied
+    """
 
-def isEmpty(cell):
-    return cellFlow(cell) == -1
+    return grid.values[cell] == None
 
-# boolean of whether this (col, row) tuple is in the grid
-def cellInGrid(cell, grid):
+def inGrid(grid, cell):
+    """
+    determine if this (col, row) pair fits in the grid or not
+
+    @param  grid    :   grid of the cell
+    @param  cell    :   2-tuple of 0-indexed (column, row) pair
+
+    @return         :   boolean of whether (col, row) lies within the grid
+    """
+
     if 0 <= cell[0] < grid.cols:
         if 0 <= cell[1] < grid.rows:
             return True
 
     return False
 
-# number of flow cells adjecent to this cell
-def degree(cell, grid, flow):
+def flowDegree(grid, cell, flow):
+    """
+    find number of cells occupied by the given flow this (col, row) is adjacent with
+
+    @param  grid    :   grid of the cell
+    @param  cell    :   2-tuple of 0-indexed (column, row) pair
+    @param  flow    :   index of flow we're looking for
+
+    @return         :   number of adjacent cells occupied by the flow
+    """
+
+    flowDeg = 0
+    for function in next:
+        next_cell = function(*cell)
+        if inGrid(grid, next_cell) and grid.values[cell].index == flow:
+            flowDeg = flowDeg + 1
+
+    return flowDeg
+
+def degree(grid, cell):
+    """
+    find total number of occupied cells this (col, row) is adjacent with
+
+    @param  grid    :   grid of the cell
+    @param  cell    :   2-tuple of 0-indexed (column, row) pair
+
+    @return         :   number of adjacent occupied cells
+    """
+
     deg = 0
-    for func in add:
-        next_cell = func(*cell)
-        if cellInGrid(next_cell, grid) and cells[ next_cell[0] ][ next_cell[1] ] == flow:
+    for function in next:
+        next_cell = function(*cell)
+        if inGrid(grid, next_cell) and not isEmpty(grid, cell):
             deg = deg + 1
 
     return deg
 
+def getAllShortestPaths(cell, grid):
+    """
+    find the shortest paths from the start cell to all unoccupied cells in the grid
 
-# TODO: make sure paths only go into empty cells
-def bfs(start, grid):
-    global distances, visited, parents
+    @param  grid        :   grid of the start cell
+    @param  cell        :   starting cell we find paths for
 
-    Q = [ start ]
-    visited[ start[0] ][ start[1] ] = True
-    parents[ start[0] ][ start[1] ] = start
+    @return             :   a 2D list of the parent cell of each cell in its shortest path
+    """
 
-    while not Q == []:
-        cell = Q.pop(0)
+    visited = [ [ False for x in range(grid.cols) ] for y in range(grid.rows) ]
+    parents = [ [ None for x in range(grid.cols) ] for y in range(grid.rows) ]
 
-        for i in range(4):
-            next_cell = add[i](*cell)
-            if cellInGrid(next_cell, grid) and isEmpty(next_cell) and visited[ next_cell[0] ][ next_cell[1] ] is False:
+    # perform a breadth-first search on the grid, starting with the starting cell
+    # to find all its shortests paths
+    queue = [ cell ]
+
+    # mark the starting cell as visited (note that the only cell with a parent of None
+    # is the starting cell)
+    visited[ cell[0] ][ cell[1] ] = True
+
+    while not queue == []:
+        current = Q.pop(0)
+
+        for function in next:
+            next_cell = function(current)
+            if inGrid(grid, next_cell) and isEmpty(grid, next_cell) and visited[ next_cell[0] ][ next_cell[1] ] is False:
                 visited[ next_cell[0] ][ next_cell[1] ] = True
                 parents[ next_cell[0] ][ next_cell[1] ] = cell
-                Q.append(next_cell)
+                queue.append(next_cell)
 
+    return parents
 
-
-# ------------------------------------------------------------------------------
-
-# seed the random generator
-seed(datetime.now())
-
-# record of which flow (0-indexed) is covering each cell
-cells = [ [-1 for y in range(GRID_SIZE) ] for x in range(GRID_SIZE) ]
-
-# create the window and the grid
-window = pyglet.window.Window(WINDOW_WIDTH, WINDOW_HEIGHT)
-grid = Grid(    [ 100, 56 ],
-                760, 427,
-                GRID_SIZE,
-                GRID_SIZE,
-                (179, 179, 179),
-                thickness = 5.0,    )
-
-# list of the grid's Flow objects
-flows = []
-n_flow = 0
-# max_flows = ceil(random() * GRID_SIZE)
-
-flows.append(Flow(  grid,
-                    [ floor(random() * 255) for x in range(3) ] ))
-
-endpoint1 = [ floor(random() * grid.cols), floor(random() * grid.rows) ]
-
-flows[0].addEndpoint(endpoint1)
-#flows[0].addEndpoint(endpoint2)
-
-#print("Endpoint2 = " + str(endpoint2))
-
-distances = [ [ 1000 for x in range(GRID_SIZE) ] for y in range(GRID_SIZE) ]
-parents = [ [ None for x in range(GRID_SIZE) ] for y in range(GRID_SIZE) ]
-visited = [ [ False for x in range(GRID_SIZE) ] for y in range(GRID_SIZE) ]
-bfs(endpoint1, grid)
-
-paths = []
-
-wanted = floor(random() * GRID_SIZE) + 2
-closest_dist_path = []
-closest_dist = 1000
-
-for i in range(GRID_SIZE):
-    for j in range(GRID_SIZE):
-        cell, path, distance = [i, j], [ [i, j] ], 0
-        while not cell == endpoint1:
-            cell = parents[ cell[0] ][ cell[1] ]
-            path.append(cell)
-            distance = distance + 1
-
-        distances[i][j] = distance
-
-        if abs(wanted - distance) < abs(wanted - closest_dist):
-            closest_dist_path = path
-            closest_dist = distance
-
-# reverse closest path so it starts at the first endpoint
-closest_dist_path.reverse()
-
-print("Wanted shortest distance = " + str(wanted))
-print("Actual shortest distance = " + str(closest_dist))
-print("Best shortest path = ", str(closest_dist_path))
-
-
-# add the shortest path with the distance closest to the wanted distance
-# flows[0].addEndpoint(closest_dist_path[0])
-
-cells[ closest_dist_path[0][0] ][ closest_dist_path[0][1] ] = 0
-for i in range(1, closest_dist + 1):
-    cells[ closest_dist_path[i][0] ][ closest_dist_path[i][1] ] = 0
-    flows[0].addCell(closest_dist_path[i])
-
-n_steps = floor(random() * 3) + 4
-current = closest_dist_path[-1]
-last2dir, endpoint2 = [-1, -1], []
-
-print("# random steps = " + str(n_steps))
-
-for i in range(n_steps):
-    directions = [ LEFT, DOWN, RIGHT, UP ]
-
+def randomStep(grid, path, flow_index=None):
     """
-    if last2dir in ( [DOWN, RIGHT], [ DOWN, LEFT ] ) or last2dir[1] == DOWN:
-        directions.remove(UP)
-    elif last2dir in ( [UP, RIGHT], [UP, LEFT] ) or last2dir[1] == UP:
-        directions.remove(DOWN)
-    elif last2dir in ( [LEFT, UP], [LEFT, DOWN] ) or last2dir[1] == LEFT:
-        directions.remove(RIGHT)
-    elif last2dir in ( [RIGHT, UP], [RIGHT, DOWN] ) or last2dir[1] == RIGHT:
-        directions.remove(LEFT)
+    add a cell to the path adjacent to its last cell (one step in a random walk)
+
+    @param      path        :   ordered list of cells in the path
+    @optional   flow_index  :   index of flow the path is being made for
+
+    @return                 :   path with added cell, or None if no cell could be added
     """
 
-    # randomize which directions we may go in
+    # randomize which direction the next step is in from the last cell in the path
+    directions = [ LEFT_DIRECTION, DOWN_DIRECTION, RIGHT_DIRECTION, UP_DIRECTION ]
     shuffle(directions)
 
-    print(current)
-    print("degree = " + str(degree(current, grid, 0)))
-    print(directions)
+    # choose a cell in a direction that meets requirements
+    for direction in directions:
+        next_cell = next[direction](*path[-1])
 
-    for d in directions:
-        next_cell = add[d](*current)
+        # the next cell needs to:
+        # 1) be in the grid
+        # 2) unoccupied
+        # 3) if flow is given, have a flow degree < 2
 
-        print("direction = " + str(d) + " | next = " + str(next_cell))
+        if inGrid(grid, next_cell) and isEmpty(grid, next_cell):
+            if flow_index == None or flowDegree(grid, next_cell, flow_index) < 2:
+                return path + [ next_cell ]
 
-        if cellInGrid(next_cell, grid) and isEmpty(next_cell) and degree(next_cell, grid, 0) < 2:
-            flows[0].addCell(next_cell)
-            cells[ next_cell[0] ][ next_cell[1] ] = 0
-            current = next_cell
-
-            if last2dir == [-1, -1]:
-                last2dir = [ d, d ]
-            else:
-                last2dir = [ last2dir[1], d ]
-
-            break
-
-    print("")
-
-# the endpoint appears twice in the path after the last loop
-#del flows[0].path[-1]
-
-endpoint2 = flows[0].path[-1]
-flows[0].addEndpoint(endpoint2)
-
-print("Endpoint1 = " + str(endpoint1))
-print("Endpoint2 = " + str(endpoint2))
-
-# strategy: add random walk for a few vertices and then use shortest path?
-# random + deterministric = still kinda random
-
-# find path then draw flow for it
-print(flows[0].path)
-
-"""
-for i in range(GRID_SIZE):
-    print(parents[i])
-
-for i in range(GRID_SIZE):
-    print(distances[i])
-"""
-
-@window.event
-def on_draw():
-    window.clear()
-
-    grid.draw()
-
-    for flow in flows:
-        flow.draw()
-
-pyglet.app.run()
+    # if we reach here, no cell could be added to the path
+    return None

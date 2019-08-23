@@ -10,6 +10,7 @@ class Flow:
     --------------------
     @attribute grid     :   grid that flow belongs to
     @attribute color    :   3-tuple of the RGB values for the flow
+    @attribute index    :   number assigned to this flow
 
     optional attributes (default value):
     ------------------------------------
@@ -24,7 +25,7 @@ class Flow:
     """
 
 
-    def __init__(self, grid, color):
+    def __init__(self, grid, color, index):
         """
         constructor for the Flow class
 
@@ -33,6 +34,8 @@ class Flow:
 
         self.grid = grid
         self.color = color
+        self.index = index
+
         self.path = []
         self.flowBatch = pyglet.graphics.Batch()
 
@@ -51,7 +54,9 @@ class Flow:
                                     batch = self.flowBatch,
                                     color = self.color  )
 
+        # add the cell to the path and mark it with this Flow object
         self.path.append(cell)
+        self.grid.values[cell] = self
 
     def addCell(self, next_cell):
         """
@@ -70,15 +75,26 @@ class Flow:
                                 width = 5.0,                # the width should adjust with grid spacing
                                 batch = self.flowBatch  )
 
+        # add the cell to the path and mark it with this Flow object
         self.path.append(next_cell)
+        self.grid.values[next_cell] = self
 
-    def lastCell(self):
+    def addPath(self, path):
         """
-        return the last cell in this flow's path
+        add an ordered list of cells to the path
 
+        @param  path    :   ordered list of cells (first and last are endpoints)
         """
 
-        return self.path[-1]
+        # ignore paths of length less than 3
+        if len(path) < 2:
+            return
+
+        self.addEndpoint(path[0])
+        self.addEndpoint(path[-1])
+
+        for i in range(1, len(path) - 1):
+            self.addCell(path[i])
 
     def draw(self):
         """

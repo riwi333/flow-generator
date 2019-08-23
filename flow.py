@@ -54,6 +54,12 @@ class Flow:
         self.path.append(cell)
 
     def addCell(self, next_cell):
+        """
+        add a cell to this flow's path (internally and drawing-wise)
+
+        @param cell :   2-tuple of 0-indexed (column, row) pair
+        """
+
         # get the cell we just left
         current_cell = self.path[-1]
 
@@ -66,5 +72,18 @@ class Flow:
 
         self.path.append(next_cell)
 
+    def lastCell(self):
+        """
+        return the last cell in this flow's path
+
+        """
+
+        return self.path[-1]
+
     def draw(self):
+        """
+        draw the flow (endpoints and path) using its batch
+
+        """
+
         self.flowBatch.draw()

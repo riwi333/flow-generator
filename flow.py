@@ -56,7 +56,7 @@ class Flow:
 
         # add the cell to the path and mark it with this Flow object
         self.path.append(cell)
-        self.grid.values[cell] = self
+        self.grid.values[ cell[0] ][ cell[1] ] = self
 
     def addCell(self, next_cell):
         """
@@ -77,7 +77,7 @@ class Flow:
 
         # add the cell to the path and mark it with this Flow object
         self.path.append(next_cell)
-        self.grid.values[next_cell] = self
+        self.grid.values[ next_cell[0] ][ next_cell[1] ] = self
 
     def addPath(self, path):
         """
@@ -91,10 +91,11 @@ class Flow:
             return
 
         self.addEndpoint(path[0])
-        self.addEndpoint(path[-1])
 
-        for i in range(1, len(path) - 1):
+        for i in range(1, len(path)):
             self.addCell(path[i])
+
+        self.addEndpoint(path[-1])
 
     def draw(self):
         """

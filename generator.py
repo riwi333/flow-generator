@@ -17,6 +17,8 @@ DOWN_DIRECTION = 1
 RIGHT_DIRECTION = 2
 UP_DIRECTION = 3
 
+directions = [ LEFT_DIRECTION, DOWN_DIRECTION, RIGHT_DIRECTION, UP_DIRECTION ]
+
 # lambda functions to produce adjacent cell coordinates depending on direction
 # x is the column of the cell, and y is the row
 next = {
@@ -36,7 +38,7 @@ def isEmpty(grid, cell):
     @return         :   boolean of whether cell is not occupied
     """
 
-    return grid.values[cell] == None
+    return grid.values[ cell[0] ][ cell[1] ] == None
 
 def inGrid(grid, cell):
     """
@@ -66,10 +68,12 @@ def flowDegree(grid, cell, flow):
     """
 
     flowDeg = 0
-    for function in next:
-        next_cell = function(*cell)
-        if inGrid(grid, next_cell) and grid.values[cell].index == flow:
-            flowDeg = flowDeg + 1
+    for direction in directions:
+        next_cell = next[direction](*cell)
+
+        if inGrid(grid, next_cell) and not grid.values[ next_cell[0] ][ next_cell[1] ] == None:
+            if flow == None or grid.values[ next_cell[0] ][ next_cell[1] ].index == flow:
+                flowDeg = flowDeg + 1
 
     return flowDeg
 
@@ -84,14 +88,14 @@ def degree(grid, cell):
     """
 
     deg = 0
-    for function in next:
-        next_cell = function(*cell)
-        if inGrid(grid, next_cell) and not isEmpty(grid, cell):
+    for direction in directions:
+        next_cell = next[direction](*cell)
+        if inGrid(grid, next_cell) and not isEmpty(grid, next_cell):
             deg = deg + 1
 
     return deg
 
-def getAllShortestPaths(cell, grid):
+def getAllShortestPaths(grid, cell):
     """
     find the shortest paths from the start cell to all unoccupied cells in the grid
 
@@ -113,13 +117,13 @@ def getAllShortestPaths(cell, grid):
     visited[ cell[0] ][ cell[1] ] = True
 
     while not queue == []:
-        current = Q.pop(0)
+        current = queue.pop(0)
 
-        for function in next:
-            next_cell = function(current)
+        for direction in directions:
+            next_cell = next[direction](*current)
             if inGrid(grid, next_cell) and isEmpty(grid, next_cell) and visited[ next_cell[0] ][ next_cell[1] ] is False:
                 visited[ next_cell[0] ][ next_cell[1] ] = True
-                parents[ next_cell[0] ][ next_cell[1] ] = cell
+                parents[ next_cell[0] ][ next_cell[1] ] = current
                 queue.append(next_cell)
 
     return parents
@@ -135,11 +139,11 @@ def randomStep(grid, path, flow_index=None):
     """
 
     # randomize which direction the next step is in from the last cell in the path
-    directions = [ LEFT_DIRECTION, DOWN_DIRECTION, RIGHT_DIRECTION, UP_DIRECTION ]
-    shuffle(directions)
+    step_directions = [ LEFT_DIRECTION, DOWN_DIRECTION, RIGHT_DIRECTION, UP_DIRECTION ]
+    shuffle(step_directions)
 
     # choose a cell in a direction that meets requirements
-    for direction in directions:
+    for direction in step_directions:
         next_cell = next[direction](*path[-1])
 
         # the next cell needs to:
@@ -153,3 +157,23 @@ def randomStep(grid, path, flow_index=None):
 
     # if we reach here, no cell could be added to the path
     return None
+
+def chooseEndpoint(grid):
+    """
+    find a random point on the grid with adjacent empty cells
+
+    @param  grid    :   grid of the endpoint
+
+    @return         :   random available point, or None if there are none
+    """
+
+    available = []
+    for i in range(grid.cols):
+        for j in range(grid.rows):
+            if isEmpty(grid, [i, j]) and degree(grid, [i, j]) < 4:
+                available.append([i, j])
+
+    if available == []:
+        return None
+    else:
+        return available[ floor(random() * len(available)) ]

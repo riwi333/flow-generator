@@ -102,10 +102,7 @@ class Grid:
         self.labelBatch = self.generateLabels(self.labelColor)
 
         # initialize the cell-value mapping (all un-assigned by being set to None)
-        self.values = {}
-        for i in range(self.cols):
-            for j in range(self.rows):
-                self.values[ [i, j] ] = None
+        self.values = [ [ None for x in range(self.cols) ] for y in range(self.rows) ]
 
     def draw(self):
         """

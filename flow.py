@@ -2,12 +2,6 @@ import pyglet
 import graphics as graphics
 import grid
 
-# TODO: separate functions editing path from functions about drawing the flow
-# there should be a single function drawFlow() that creates all vertex lists
-# needed to draw the flow; the idea is that the path can be edited as needed,
-# and then when the flow is finalized we can use drawFlow() to draw its
-# permanent representation
-
 class Flow:
     """
     class to represent and draw a single flow

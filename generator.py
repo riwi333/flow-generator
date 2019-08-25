@@ -224,6 +224,10 @@ def generateFlows(grid, n_flows):
             empty.append([i, j])
 
     for i in range(n_flows):
+        # if all the cells in this grid are already taken, stop creating flows
+        if len(empty) == 0:
+            break
+
         # create a new Flow object of random color
         flows.append(Flow(  grid,
                             [ floor(random() * 255) for x in range(3) ],

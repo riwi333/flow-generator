@@ -225,3 +225,13 @@ class Grid:
 
         else:
             return str(cell[0] + 1) + "-" + str(cell[1] + 1)
+
+    def clearValues(self):
+        """
+        reset the value attribute of this graph
+
+        """
+
+        for x in range(self.cols):
+            for y in range(self.rows):
+                self.values[x][y] = None

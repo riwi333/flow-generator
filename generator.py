@@ -158,27 +158,7 @@ def randomStep(grid, path, flow_index=None):
     # if we reach here, no cell could be added to the path
     return None
 
-def chooseEndpoint(grid):
-    """
-    find a random point on the grid with adjacent empty cells
-
-    @param  grid    :   grid of the endpoint
-
-    @return         :   random available point (2-tuple), or None if there are none
-    """
-
-    available = []
-    for i in range(grid.cols):
-        for j in range(grid.rows):
-            if isEmpty(grid, [i, j]) and degree(grid, [i, j]) < 4:
-                available.append([i, j])
-
-    if available == []:
-        return None
-    else:
-        return available[ floor(random() * len(available)) ]
-
-def adjacentDirection(self, cell1, cell2):
+def adjacentDirection(cell1, cell2):
     """
     determine whether two given cells are adjacent or not
 
@@ -223,7 +203,7 @@ def generateFlows(grid, n_flows):
         for j in range(grid_size):
             empty.append([i, j])
 
-    for i in range(n_flows):
+    for n in range(n_flows):
         # if all the cells in this grid are already taken, stop creating flows
         if len(empty) == 0:
             break
@@ -263,7 +243,7 @@ def generateFlows(grid, n_flows):
         # print(shortestPaths)
 
         # choose a distance we want to aim for in a shortest path
-        distance_goal = floor(random() * float(len(empty)) / grid_size) + 3
+        distance_goal = floor(random() * 2 * float(len(empty)) / grid_size) + 3
 
         # print("Distance goal: " + str(distance_goal))
 
@@ -298,7 +278,8 @@ def generateFlows(grid, n_flows):
         # if this path only has a length of 1, there were no reachable cells from the
         # starting point, so delete this flow (*most likely*, this means that no other
         # flows can fit into the grid)
-        if len(closest_distance_path) == 1:
+        # we also reject paths of length 2, since the minimum legal path length is 3
+        if len(closest_distance_path) < 3:
             del flows[-1]
             continue
 

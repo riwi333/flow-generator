@@ -28,7 +28,6 @@ class Flow:
                                     circles
     """
 
-
     def __init__(self, grid, color, index):
         """
         constructor for the Flow class
@@ -40,11 +39,11 @@ class Flow:
         self.color = color
         self.index = index
 
-        self.endpoints = []
+        self.endpoints = [ None, None ]
         self.path = []
         self.flowBatch = pyglet.graphics.Batch()
         self.pathLines = []
-        self.endpointCircles = []
+        self.endpointCircles = [ None, None ]
 
     def addEndpoint(self, cell):
         """
@@ -53,7 +52,14 @@ class Flow:
         @param cell :   2-tuple of 0-indexed (column, row) pair
         """
 
-        self.endpoints.append(cell)
+        if self.endpoints[0] == None:
+            self.endpoints[0] = cell
+
+        elif self.endpoints[1] == None:
+            self.endpoints[1] = cell
+
+        else:
+            return
 
         # add the cell to the path and mark the grid with this Flow object
         self.path.append(cell)
@@ -72,7 +78,7 @@ class Flow:
 
     def addPath(self, path):
         """
-        add an ordered list of cells to the path
+        use an ordered list of cells for the flow's path
 
         @param  path    :   ordered list of cells (first and last are endpoints)
         """
@@ -88,6 +94,47 @@ class Flow:
 
         self.addEndpoint(path[-1])
 
+    def extendPath(self, partialPath, endpoint):
+        """
+        extend this flow's path past the given endpoint
+
+        @param  partialPath :   path to add to flow, in order beginning
+                                with the given endpoint
+        @praram endpoint    :   endpoint of the flow we're extending past
+
+        @return             :   endpoint of the new path, if given, or None if an endpoint
+                                from this flow was not given
+        """
+
+        # print(self.path)
+        # print("+")
+        # print(partialPath)
+        # print("=")
+
+        # if we're extending past the first endpoint, the new path list needs to
+        # come before the old path list
+        if self.endpoints[0] == endpoint:
+            # self.removeCell(endpoint)
+            self.path = partialPath + self.path
+            # print(self.path)
+            # print(" ")
+            self.endpoints[0] = partialPath[-1]
+            for cell in partialPath:
+                self.grid.values[ cell[0] ][ cell[1] ] = self
+            return self.path[0]
+
+        if self.endpoints[1] == endpoint:
+            # self.removeCell(endpoint)
+            self.path = self.path[:-1] + partialPath
+            # print(self.path)
+            # print(" ")
+            self.endpoints[1] = partialPath[-1]
+            for cell in partialPath:
+                self.grid.values[ cell[0] ][ cell[1] ] = self
+            return self.path[-1]
+
+        return None
+
     def removeCell(self, cell):
         """
         remove the given cell (including endpoints) from the flow and its graphics batch
@@ -99,12 +146,12 @@ class Flow:
             # if this cell is the first endpoint
             if cell == self.path[0]:
                 self.path = self.path[1:]
-                del self.endpoints[0]
+                self.endpoints[0] = None
 
             # if this cell is the second endpoint
             elif cell == self.path[-1]:
                 self.path = self.path[1:]
-                del self.endpoints[1]
+                self.endpoints[1] = None
 
             # if this cell is within the flow path
             else:
@@ -117,6 +164,21 @@ class Flow:
         else:
             return None
 
+    def resetGraphics(self):
+        """
+        delete all of the current graphics for this flow
+
+        """
+
+        if not self.endpointCircles[0] == None:
+            self.endpointCircles[0].delete()
+
+        if not self.endpointCircles[1] == None:
+            self.endpointCircles[1].delete()
+
+        for i in range(len(self.pathLines) - 1):
+            self.pathLines[i].delete()
+
     def updateGraphics(self):
         """
         draw all graphics for the flow's endpoints and path cells and them to
@@ -124,29 +186,32 @@ class Flow:
 
         """
 
-        # add the circles used to draw the endpoints to the flow's batch
-        self.endpointCircles.append(graphics.generateCircle(self.grid.getCellCenter(self.endpoints[0]),
-                                                            0.3 * min(*self.grid.getSpacing()),
-                                                            15,
-                                                            fill = True,
-                                                            batch = self.flowBatch,
-                                                            color = self.color  ))
+        self.resetGraphics()
+        self.pathLines = [ None for i in range(len(self.path) - 1) ]
 
-        self.endpointCircles.append(graphics.generateCircle(self.grid.getCellCenter(self.endpoints[1]),
+        # add the circles used to draw the endpoints to the flow's batch
+        self.endpointCircles[0] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[0]),
                                                             0.3 * min(*self.grid.getSpacing()),
                                                             15,
                                                             fill = True,
                                                             batch = self.flowBatch,
-                                                            color = self.color  ))
+                                                            color = self.color  )
+
+        self.endpointCircles[1] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[1]),
+                                                            0.3 * min(*self.grid.getSpacing()),
+                                                            15,
+                                                            fill = True,
+                                                            batch = self.flowBatch,
+                                                            color = self.color  )
 
         # add the lines used to draw the flow's path to the flow's batch
-        for i in range(0, len(self.path) - 1):
+        for i in range(len(self.path) - 1):
             # draw a line between the current cell and the next cell
-            self.pathLines.append(graphics.generateLine(self.grid.getCellCenter(self.path[i]),
+            self.pathLines[i] = graphics.generateLine(  self.grid.getCellCenter(self.path[i]),
                                                         self.grid.getCellCenter(self.path[i+1]),
                                                         color = self.color,
                                                         width = 5.0,
-                                                        batch = self.flowBatch  ))
+                                                        batch = self.flowBatch  )
 
     def draw(self):
         """

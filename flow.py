@@ -190,19 +190,21 @@ class Flow:
         self.pathLines = [ None for i in range(len(self.path) - 1) ]
 
         # add the circles used to draw the endpoints to the flow's batch
-        self.endpointCircles[0] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[0]),
-                                                            0.3 * min(*self.grid.getSpacing()),
-                                                            15,
-                                                            fill = True,
-                                                            batch = self.flowBatch,
-                                                            color = self.color  )
+        if not self.endpoints[0] == None:
+            self.endpointCircles[0] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[0]),
+                                                                0.3 * min(*self.grid.getSpacing()),
+                                                                15,
+                                                                fill = True,
+                                                                batch = self.flowBatch,
+                                                                color = self.color  )
 
-        self.endpointCircles[1] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[1]),
-                                                            0.3 * min(*self.grid.getSpacing()),
-                                                            15,
-                                                            fill = True,
-                                                            batch = self.flowBatch,
-                                                            color = self.color  )
+        if not self.endpoints[1] == None:
+            self.endpointCircles[1] = graphics.generateCircle(  self.grid.getCellCenter(self.endpoints[1]),
+                                                                0.3 * min(*self.grid.getSpacing()),
+                                                                15,
+                                                                fill = True,
+                                                                batch = self.flowBatch,
+                                                                color = self.color  )
 
         # add the lines used to draw the flow's path to the flow's batch
         for i in range(len(self.path) - 1):

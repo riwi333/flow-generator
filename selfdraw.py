@@ -71,6 +71,7 @@ def on_draw():
     cursor_batch.draw()
 
     for flow in flows:
+        flow.updateGraphics()
         flow.draw()
 
 # dictionary of arrow key mappings to coordinate changes
@@ -93,7 +94,8 @@ def on_key_press(symbol, modifiers):
         # if we're not currently drawing a flow, make a new one
         if flow_selected is False and cellFlow(cursor_cell) == -1:
             flows.append(Flow(  grid,
-                            [ floor(random() * 255) for x in range(3) ] ))
+                                [ floor(random() * 255) for x in range(3) ],
+                                n_flow  ))
 
             # make sure the initial endpoint is drawn
             flows[n_flow].addEndpoint(cursor_cell)
@@ -122,7 +124,7 @@ def on_key_press(symbol, modifiers):
                 for j in range(GRID_SIZE):
                     if cells[i][j] > flow_index:
                         cells[i][j] = cells[i][j] - 1
-                        
+
                     if cells[i][j] == flow_index:
                         cells[i][j] = -1
 
@@ -135,8 +137,6 @@ def on_key_press(symbol, modifiers):
                 n_flow = n_flow - 1
 
             flow_selected = False
-
-
 
     # move the cursor and flows with the arrow keys
     elif symbol in keys.keys():

@@ -17,9 +17,11 @@ while drawing it)
 
 """
 
+# TODO: code only allows you to delete the first flow without issues
+
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
-GRID_SIZE = 5
+GRID_SIZE = 7
 
 # seed the random generator
 seed(datetime.now())
@@ -98,14 +100,14 @@ def on_key_press(symbol, modifiers):
                                 n_flow  ))
 
             # make sure the initial endpoint is drawn
-            flows[n_flow].addEndpoint(cursor_cell)
+            flows[n_flow].addCell(cursor_cell)
 
             cells[ cursor_cell[0] ][ cursor_cell[1] ] = n_flow
             flow_selected = True
 
         # if we're currently drawing a flow, put its second endpoint down and stop
         elif flow_selected is True and cellFlow(cursor_cell) == n_flow:
-            flows[n_flow].addEndpoint(cursor_cell)
+            flows[n_flow].addCell(cursor_cell)
 
             n_flow = n_flow + 1
             flow_selected = False

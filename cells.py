@@ -5,6 +5,7 @@ from flow import Flow
 from random import random, shuffle, seed
 from datetime import datetime
 from math import floor, ceil
+from itertools import product
 
 """
 functions for dealing with cells in grids
@@ -22,10 +23,10 @@ directions = [ LEFT_DIRECTION, DOWN_DIRECTION, RIGHT_DIRECTION, UP_DIRECTION ]
 # lambda functions to produce adjacent cell coordinates depending on direction
 # x is the column of the cell, and y is the row
 next = {
-    LEFT_DIRECTION  :   lambda x, y   : [x - 1, y],
-    DOWN_DIRECTION  :   lambda x, y   : [x, y - 1],
-    RIGHT_DIRECTION :   lambda x, y   : [x + 1, y],
-    UP_DIRECTION    :   lambda x, y   : [x, y + 1]
+    LEFT_DIRECTION  :   lambda x, y   : (x - 1, y),
+    DOWN_DIRECTION  :   lambda x, y   : (x, y - 1),
+    RIGHT_DIRECTION :   lambda x, y   : (x + 1, y),
+    UP_DIRECTION    :   lambda x, y   : (x, y + 1)
 }
 
 def isEmpty(grid, cell):
@@ -111,3 +112,14 @@ def adjacentDirection(cell1, cell2):
             return direction
 
     return None
+
+def permutate(grid_size):
+    """
+    get a list of all possible cell coordinates in a square grid
+
+    @param  grid_size   :   # of rows/columns in the grid
+
+    @return             :   list of all possible cell coordinate tuples in the grid
+    """
+
+    return list(product(range(grid_size), repeat=2))

@@ -3,8 +3,7 @@ from flow import Flow
 from random import random, shuffle, seed
 from datetime import datetime
 from math import floor, ceil
-import cells
-import itertools
+import direction
 
 """
 functions for handling flow generation
@@ -26,7 +25,7 @@ def getDegreeMinimizedShortestPaths(grid, empty, source):
                             its component, not including itself)
     """
 
-    # use Dijkstra to find all SSSPs with w(u, v) = cells.emptyDegree(v)
+    # use Dijkstra to find all SSSPs with w(u, v) = grid.degree(v)
 
     MAX_DISTANCE = grid.cols ** 2
 
@@ -37,10 +36,10 @@ def getDegreeMinimizedShortestPaths(grid, empty, source):
     # initialize list of unvisited cells (ignoring occupied cells)
     unvisited = list(empty)
     for cell in unvisited:
-        if not cells.isEmpty(grid, cell):
+        if not grid.isEmpty(cell):
             queue.remove(cell)
 
-    parents = { cell : None for cell in cells.permutate(grid.cols) }
+    parents = { cell : None for cell in grid.getAllCellCoordinates() }
     block_size = 0
 
     while len(unvisited) > 0:
@@ -53,11 +52,11 @@ def getDegreeMinimizedShortestPaths(grid, empty, source):
 
         unvisited.remove(min_cell)
 
-        for direction in cells.directions:
-            adj_cell = cells.next[direction](*min_cell)
-            if cells.inGrid(grid, adj_cell) and cells.isEmpty(grid, adj_cell):
-                if distances[adj_cell] > distances[min_cell] + cells.emptyDegree(grid, adj_cell):
-                    distances[adj_cell] = distances[min_cell] + cells.emptyDegree(grid, adj_cell)
+        for dir in direction.directions:
+            adj_cell = direction.next[dir](*min_cell)
+            if grid.inBounds(adj_cell) and grid.isEmpty(adj_cell):
+                if distances[adj_cell] > distances[min_cell] + grid.degree(adj_cell):
+                    distances[adj_cell] = distances[min_cell] + grid.degree(adj_cell)
 
                     if parents[adj_cell] == None:
                         block_size = block_size + 1
@@ -81,23 +80,23 @@ def randomStep(grid, path, last_direction=None, flow_index=None):
     """
 
     # randomize which direction the next step is in from the last cell in the path
-    step_directions = [ cells.LEFT_DIRECTION, cells.DOWN_DIRECTION, cells.RIGHT_DIRECTION, cells.UP_DIRECTION ]
+    step_directions = list(direction.directions)
     if not last_direction == None:
         del step_directions[(last_direction + 2) % 4]
     shuffle(step_directions)
 
     # choose a cell in a direction that meets requirements
-    for direction in step_directions:
-        next_cell = cells.next[direction](*path[-1])
+    for dir in step_directions:
+        next_cell = direction.next[dir](*path[-1])
 
         # the next cell needs to:
         # 1) be in the grid
         # 2) unoccupied
         # 3) if flow is given, have a flow degree < 2
 
-        if cells.inGrid(grid, next_cell) and cells.isEmpty(grid, next_cell):
-            if flow_index == None or cells.flowDegree(grid, next_cell, flow_index) < 2:
-                return ( path + [ next_cell ], direction )
+        if grid.inBounds(next_cell) and grid.isEmpty(next_cell):
+            if flow_index == None or grid.valueDegree(next_cell, flow_index) < 2:
+                return ( path + [ next_cell ], dir )
 
     # if we reach here, no cell could be added to the path
     return ( path, None )
@@ -118,7 +117,7 @@ def generateFlows(grid, n_flows):
     # we assume the grids are square, so grid.cols == grid.rows
     GRID_SIZE = grid.cols
 
-    flows, empty = [], list(itertools.product([i for i in range(GRID_SIZE)], repeat=2))
+    flows, empty = [], grid.getAllCellCoordinates()
 
     # print(empty)
 
@@ -140,16 +139,16 @@ def generateFlows(grid, n_flows):
 
     # mark the used cells as occupied
     for cell in path:
-        empty.remove(tuple(cell))
+        empty.remove(cell)
 
     index = 1
     for x in range(5 * GRID_SIZE):
         # get all empty cells adjacent to occupied cells
         front = []
         for cell in empty:
-            for direction in cells.directions:
-                next_cell = cells.next[direction](*cell)
-                if cells.inGrid(grid, next_cell) and not cells.isEmpty(grid, next_cell):
+            for dir in direction.directions:
+                next_cell = direction.next[dir](*cell)
+                if grid.inBounds(next_cell) and not grid.isEmpty(next_cell):
                     front.append(cell)
                     break
 
@@ -158,7 +157,7 @@ def generateFlows(grid, n_flows):
 
         endpoints = []
         for cell in front:
-            if cells.emptyDegree(grid, cell) == 1:
+            if grid.degree(cell) == 1:
                 endpoints.append(cell)
                 break
 
@@ -172,7 +171,7 @@ def generateFlows(grid, n_flows):
         # print(endpoint1)
         # print(parents)
 
-        shortestPaths = { cell : None for cell in cells.permutate(GRID_SIZE) }
+        shortestPaths = { cell : None for cell in grid.getAllCellCoordinates() }
         for cell in shortestPaths.keys():
             if not parents[cell] == None:
                 path = [ cell ]

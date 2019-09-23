@@ -1,9 +1,7 @@
 import pyglet
 import graphics
 import grid
-
-HEAD = 0
-TAIL = 1
+import direction
 
 class Flow:
     """
@@ -47,7 +45,7 @@ class Flow:
         self.pathLines = []
         self.endpointCircles = [ None, None ]
 
-    def addCell(self, next_cell, side=HEAD):
+    def addCell(self, next_cell, side=direction.HEAD):
         """
         add a cell to this flow's path
 
@@ -57,9 +55,9 @@ class Flow:
         """
 
         # add the cell to the path and mark it with this Flow object's index in the grid
-        if side == HEAD:
+        if side == direction.HEAD:
             self.path.append(next_cell)
-        elif side == TAIL:
+        elif side == direction.TAIL:
             self.path = [ next_cell ] + self.path
         else:
             raise Exception("Invalid 'side' parameter given")

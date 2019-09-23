@@ -20,6 +20,10 @@ next = {
     UP_DIRECTION    :   lambda x, y   : (x, y + 1)
 }
 
+# constants for differentiating the head and tail of a path
+HEAD = 0
+TAIL = 1
+
 def adjacentDirection(cell1, cell2):
     """
     determine whether two given cells are adjacent or not

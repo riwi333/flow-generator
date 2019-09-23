@@ -178,7 +178,7 @@ class Grid:
         @return :   list of all possible cell coordinate tuples in the grid
         """
 
-        return list(itertools.product(range(self.rows), range(self.cols)))
+        return list(itertools.product(range(self.cols), range(self.rows)))
 
     def clearValues(self):
         """

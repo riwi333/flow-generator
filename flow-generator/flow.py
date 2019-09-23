@@ -1,5 +1,5 @@
 import pyglet
-import graphics as graphics
+import graphics
 import grid
 
 HEAD = 0
@@ -56,7 +56,7 @@ class Flow:
                                 add cell to the tail of the path
         """
 
-        # add the cell to the path and mark it with this Flow object
+        # add the cell to the path and mark it with this Flow object's index in the grid
         if side == HEAD:
             self.path.append(next_cell)
         elif side == TAIL:
@@ -64,7 +64,7 @@ class Flow:
         else:
             raise Exception("Invalid 'side' parameter given")
 
-        self.grid.values[ next_cell[0] ][ next_cell[1] ] = self
+        self.grid.values[next_cell] = self.index
 
     def removeCell(self, cell):
         """
@@ -78,6 +78,8 @@ class Flow:
         if cell in self.path:
             index = self.path.index(cell)
             self.path = self.path[: index] + self.path[(index + 1) :]
+
+            self.grid.values[cell] = None
 
             return cell
 

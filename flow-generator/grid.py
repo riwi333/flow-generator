@@ -1,6 +1,6 @@
 import pyglet
 import graphics
-import orientation
+import direction
 import itertools
 
 class Grid:
@@ -115,7 +115,7 @@ class Grid:
         @return         :   boolean of whether cell has been assigned
         """
 
-        return grid.values[cell] == None
+        return self.values[cell] == None
 
     def inBounds(self, cell):
         """

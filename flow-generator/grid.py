@@ -1,5 +1,7 @@
 import pyglet
-import graphics as graphics
+import graphics
+import orientation
+import itertools
 
 class Grid:
     """
@@ -102,7 +104,90 @@ class Grid:
         self.labelBatch = self.generateLabels(self.labelColor)
 
         # initialize the cell-value mapping (all un-assigned by being set to None)
-        self.values = [ [ None for x in range(self.cols) ] for y in range(self.rows) ]
+        self.values = { cell : None for cell in self.getAllCellCoordinates() }
+
+    def isEmpty(self, cell):
+        """
+        determine if this cell has been assigned a value or not
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+
+        @return         :   boolean of whether cell has been assigned
+        """
+
+        return grid.values[cell] == None
+
+    def inBounds(self, cell):
+        """
+        determine if this (col, row) pair fits in the grid or not
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+
+        @return         :   boolean of whether (col, row) lies within the grid
+        """
+
+        if 0 <= cell[0] < self.cols:
+            if 0 <= cell[1] < self.rows:
+                return True
+
+        return False
+
+    def valueDegree(self, cell, value):
+        """
+        find number of cells assigned the given value this (col, row) is adjacent with
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+        @param  value   :   value we're looking for
+
+        @return         :   number of adjacent cells assigned the given value
+        """
+
+        valueDeg = 0
+
+        for dir in direction.directions:
+            next_cell = direction.next[dir](*cell)
+
+            if self.inBounds(next_cell) and self.values[next_cell] == value:
+                valueDeg = valueDeg + 1
+
+        return valueDeg
+
+    def degree(self, cell):
+        """
+        find total number of unassigned cells this (col, row) is adjacent with
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+
+        @return         :   number of adjacent unassigned cells
+        """
+
+        deg = 0
+
+        for dir in direction.directions:
+            next_cell = direction.next[dir](*cell)
+
+            if self.inBounds(next_cell) and self.isEmpty(next_cell):
+                deg = deg + 1
+
+        return deg
+
+    def getAllCellCoordinates(self):
+        """
+        get a list of all possible cell coordinates in the grid
+
+        @return :   list of all possible cell coordinate tuples in the grid
+        """
+
+        return list(itertools.product(range(self.rows), range(self.cols)))
+
+    def clearValues(self):
+        """
+        reset the values attribute of this graph
+
+        """
+
+        for cell in self.getAllCellCoordinates():
+            self.values[cell] = None
 
     def draw(self):
         """
@@ -225,13 +310,3 @@ class Grid:
 
         else:
             return str(cell[0] + 1) + "-" + str(cell[1] + 1)
-
-    def clearValues(self):
-        """
-        reset the value attribute of this graph
-
-        """
-
-        for x in range(self.cols):
-            for y in range(self.rows):
-                self.values[x][y] = None

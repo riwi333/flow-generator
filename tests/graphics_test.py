@@ -1,5 +1,5 @@
 import pyglet
-import graphics as graphics
+import graphics
 import grid
 
 """
@@ -71,16 +71,6 @@ graphics_tests = [ [        graphics.generateCircle(    [ 100, 300 ],
                                                         color = (100, 100, 100) ),
                             pyglet.gl.GL_LINE_STRIP     ],
                 ]
-
-"""
-graphics.generateRectangle(),
-graphics.generateRectangle(),
-graphics.generateRectangle(),
-graphics.generateLine(),
-graphics.generateLine(),
-graphics.generateLine(),
-graphics.generateLine(),
-"""
 
 @window.event
 def on_draw():

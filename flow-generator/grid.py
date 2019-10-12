@@ -180,6 +180,25 @@ class Grid:
 
         return list(itertools.product(range(self.cols), range(self.rows)))
 
+    def setCell(self, cell, value):
+        """
+        set a value to the given cell in the grid
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+        @param  value   :   object to assign to cell
+        """
+
+        self.values[cell] = value
+
+    def resetCell(self, cell):
+        """
+        reset the value of the given cell
+
+        @param  cell    :   2-tuple of 0-indexed (column, row) pair
+        """
+
+        self.values[cell] = None
+
     def clearValues(self):
         """
         reset the values attribute of this graph

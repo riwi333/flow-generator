@@ -26,7 +26,7 @@ def getDegreeMinimizedShortestPaths(grid, empty, source):
 
     # use Dijkstra to find all SSSPs with w(u, v) = grid.degree(v)
 
-    assert not empty == [], "No unoccupied cells available"
+    assert len(empty) > 0, "No unoccupied cells available"
     assert grid.isEmpty(source), "Source cell is already occupied"
 
     # set the maximum distance larger than any possible total degree of a path
@@ -69,6 +69,54 @@ def getDegreeMinimizedShortestPaths(grid, empty, source):
 
     return parents
 
+def getEmptyComponents(grid, empty):
+    """
+    perform a BFS to identify the connected components of empty cells in the grid
+
+    @param  grid        :   grid containing the relevant cells
+    @param  empty       :   list of all tuples of unoccupied cells in this grid
+
+    @return             :   list of lists of cells separated by components
+    """
+
+    assert len(empty) > 0
+
+    # initialize the queue and visited dictionary
+    visited, queue, components = { cell : False for cell in empty }, [], []
+
+    # push the source cell of the first component into the queue
+    queue.append( empty[0] )
+    components.append([])
+
+    while len(queue) > 0:
+        # find all the cells in this current component
+        while len(queue) > 0:
+            # pop the first element out of the queue and add it to this component
+            cell, visited[cell] = queue.pop(0), True
+            components[-1].append(cell)
+
+            # add neighbors of the popped cell that have not been visited to the queue
+            for dir in direction.directions:
+                neighbor = direction.next[dir](*cell)
+
+                if grid.inBounds(neighbor) and grid.isEmpty(neighbor) and visited[neighbor] == False:
+                    visited[neighbor] = True
+                    queue.append(neighbor)
+
+        # determine if there are any remaining unvisited cells; if so, put the first
+        # one we find into a new component
+        for cell in visited.keys():
+            if visited[cell] == False:
+                queue.append(cell)
+                visited[cell] = True
+                components.append([])
+                break
+
+        # if we reach this point and the queue is still empty, there are
+        # no more unvisited empty cells, so we've found all the components
+
+    return components
+
 def generateFlows(grid, n_flows):
     """
     randomly generate solved flow puzzles
@@ -84,28 +132,28 @@ def generateFlows(grid, n_flows):
 
     flows, empty, index = [], grid.getAllCellCoordinates(), 0
 
-    # DEBUG
     tries = 0
 
     while len(empty) > 0 and tries < 20:
         # sort the empty cells in order of ascending degree
         empty.sort( key = lambda cell : grid.degree(cell) )
 
-        """
         # DEBUG
+        print("Flow #" + str(index) + ":")
         print("Unoccupied: " + str(empty))
-        """
 
         # choose a cell to start this flow with
         attempts = 0
         while attempts < len(empty):
             # get the empty cell of lowest degree that we haven't tried yet (the "source" of this flow)
+
+            # TODO: randomize which lowest-degree cell we use; ex. if there's multiple 1-degree cells,
+            # randomly choose one of them instead of whichever one gets sorted first in the empty list
+
             source = empty[attempts]
 
-            """
             # DEBUG
             print("Source: " + str(source))
-            """
 
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
@@ -127,6 +175,12 @@ def generateFlows(grid, n_flows):
 
             block_size = len(block) + 1
 
+            """
+            # DEBUG
+            print("Source component: " + str(block))
+            print("Source component size: " + str(block_size))
+            """
+
             # find all the minimized paths from this source cell by following the edges (note that the generated paths
             # do not include the source)
             minimized_paths = {}
@@ -142,12 +196,10 @@ def generateFlows(grid, n_flows):
                 # since we follow each path from the sink to the source, we need to reverse the current paths
                 minimized_paths[cell].reverse()
 
-            """
             # DEBUG
             print("Minimized paths:")
             for sink in minimized_paths.keys():
                 print(str(sink) + ": " + str(minimized_paths[sink]))
-            """
 
             # find which sinks are of legal length (at least 3 cells long) and fit properly within the block
             potential_sinks = []
@@ -158,15 +210,54 @@ def generateFlows(grid, n_flows):
                 # path for the next flow
                 remaining_in_block = block_size - path_length
 
+                assert remaining_in_block >= 0
+
                 # the block the flow resides in, if not empty, should have either 3 or at least 6 remaining unoccupied cells
                 # NOTE: blocks of size 4, if arranged in a 2x2 square, cannot be filled legally; multiple arrangements of
                 # blocks of size 5 also cannot be filled legally; blocks with at least 6 unoccupied cells, however can
                 # always be filled legally
                 if path_length >= 3 and (remaining_in_block == 0 or remaining_in_block == 3 or remaining_in_block >= 6):
-                    # TODO: check if occupying the cells in this path will increase the number of components of unoccupied
-                    # cells; each block should be of a size following the same rules as 'remaining_in_block'
+                    satisfied = True
 
-                    potential_sinks.append(sink)
+                    # test this path to see if occupying its cells will create illegal components
+                    # NOTE: if the path fills its component (remaining_in_block' == 0) we  don't need to check for this
+                    if remaining_in_block > 0:
+                        test_empty = list(empty)
+
+                        # temporarily mark the cells in this path as occupied so we can find the resulting unoccupied components
+                        test_empty.remove(source)
+                        grid.setCell(source, index)
+                        for cell in minimized_paths[sink]:
+                            test_empty.remove(cell)
+                            grid.setCell(cell, index)
+
+                        # get the unoccupied components that would be made by this path
+                        components = getEmptyComponents(grid, test_empty)
+
+                        """
+                        # DEBUG
+                        print("Testing path: " + str(minimized_paths[sink]))
+                        print("Resulting components:")
+                        for component in components:
+                            print(component)
+                        """
+
+                        # see if the unoccupied components this path forms satisfies the 'remaining_in_block' rules
+                        for component in components:
+                            component_size = len(component)
+                            if not (component_size == 0 or component_size == 3 or component_size >= 6):
+                                satisfied = False
+                                break
+
+                        # unmark the cells of this path as occupied in the grid
+                        grid.resetCell(source)
+                        for cell in minimized_paths[sink]:
+                            grid.resetCell(cell)
+
+                    # if all the resulting components are legal, mark this path as usable
+                    if satisfied:
+                        assert satisfied == True
+                        potential_sinks.append(sink)
 
             # make sure at least one path is legal
             if len(potential_sinks) > 0:
@@ -185,6 +276,10 @@ def generateFlows(grid, n_flows):
                 """
                 # DEBUG
                 print("Path: " + str(path))
+                print("Path length: " + str(len(path)))
+                print("Resulting components:")
+                for component in components:
+                    print(component)
                 """
 
                 # remove all cells in the path from the list of unoccupied cells
@@ -201,12 +296,9 @@ def generateFlows(grid, n_flows):
             else:
                 attempts += 1
 
-            """
             # DEBUG
             print("\n")
-            """
 
-        # DEBUG
         tries += 1
 
     return (flows, empty)

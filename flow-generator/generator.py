@@ -1,6 +1,6 @@
 from grid import Grid
 from flow import Flow
-from random import random, shuffle, seed, choice
+from random import random, shuffle, seed, choices
 from datetime import datetime
 from math import floor, ceil
 import direction
@@ -117,20 +117,19 @@ def getEmptyComponents(grid, empty):
 
     return components
 
-def generateFlows(grid, n_flows):
+def generateFlows(grid):
     """
     randomly generate solved flow puzzles
 
     @param  grid    :   grid the flows will be placed on
-    @param  n_flows :   number of flows to put on the grid
 
-    @return         :   a tuple of 0) list containing all Flow()
-                        objects, in order of index and 1) a list
+    @return         :   a tuple of 0) list containing all viable
+                        paths used to fill the grid and 1) a list
                         of all the cell coordinate tuples that
                         are still unoccupied
     """
 
-    flows, empty, index = [], grid.getAllCellCoordinates(), 0
+    final_paths, empty, index = [], grid.getAllCellCoordinates(), 0
 
     tries = 0
 
@@ -138,9 +137,11 @@ def generateFlows(grid, n_flows):
         # sort the empty cells in order of ascending degree
         empty.sort( key = lambda cell : grid.degree(cell) )
 
+        """
         # DEBUG
         print("Flow #" + str(index) + ":")
         print("Unoccupied: " + str(empty))
+        """
 
         # choose a cell to start this flow with
         attempts = 0
@@ -152,8 +153,10 @@ def generateFlows(grid, n_flows):
 
             source = empty[attempts]
 
+            """
             # DEBUG
             print("Source: " + str(source))
+            """
 
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
@@ -196,10 +199,12 @@ def generateFlows(grid, n_flows):
                 # since we follow each path from the sink to the source, we need to reverse the current paths
                 minimized_paths[cell].reverse()
 
+            """
             # DEBUG
             print("Minimized paths:")
             for sink in minimized_paths.keys():
                 print(str(sink) + ": " + str(minimized_paths[sink]))
+            """
 
             # find which sinks are of legal length (at least 3 cells long) and fit properly within the block
             potential_sinks = []
@@ -261,17 +266,22 @@ def generateFlows(grid, n_flows):
 
             # make sure at least one path is legal
             if len(potential_sinks) > 0:
-                # randomly choose a path that works and create the flow for it
+                # randomly choose a path that works and create the flow for it; we weight each path's
+                # probability of being chosen so that longer paths are more likely to be used
+                weights = [ len(potential_sinks[i]) for i in range(len(potential_sinks)) ]
+                sink = choices(potential_sinks, weights=weights)[0]
 
-                # TODO: weight each path's probability of being chosen so that longer
-                # paths are more likely to be used
-
-                sink = choice(potential_sinks)
                 path = [ source ] + minimized_paths[sink]
+
+                final_paths.append(path)
+
+                """
                 flows.append(Flow(  grid,
                                     color = [ floor(random() * 256) for x in range(3) ],
                                     index = index,
                                     path = path ))
+                """
+
 
                 """
                 # DEBUG
@@ -286,6 +296,7 @@ def generateFlows(grid, n_flows):
                 for cell in path:
                     assert cell in empty, "Final path cell " + str(cell) + " already occupied"
 
+                    grid.setCell(cell, index)
                     empty.remove(cell)
 
                 # update the flow index and start the next flow
@@ -296,12 +307,14 @@ def generateFlows(grid, n_flows):
             else:
                 attempts += 1
 
+            """
             # DEBUG
             print("\n")
+            """
 
         tries += 1
 
-    return (flows, empty)
+    return (final_paths, empty)
 
 def randomStep(grid, path, last_direction=None, flow_index=None):
     """

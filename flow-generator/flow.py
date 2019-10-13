@@ -41,7 +41,7 @@ class Flow:
 
         self.path = path
         for cell in self.path:
-            self.grid.values[cell] = self.index
+            self.grid.setCell(cell, self.index)
 
         self.flowBatch = pyglet.graphics.Batch()
         self.pathLines = []
@@ -64,7 +64,7 @@ class Flow:
         else:
             raise Exception("Invalid 'side' parameter given")
 
-        self.grid.values[next_cell] = self.index
+        self.grid.setCell(next_cell, self.index)
 
     def removeCell(self, cell):
         """
@@ -79,7 +79,7 @@ class Flow:
             index = self.path.index(cell)
             self.path = self.path[: index] + self.path[(index + 1) :]
 
-            self.grid.values[cell] = None
+            self.grid.resetCell(cell)
 
             return cell
 

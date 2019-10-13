@@ -2,6 +2,8 @@ import pyglet
 from grid import Grid
 from flow import Flow
 import generator
+from math import floor
+from random import random
 
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
@@ -16,7 +18,14 @@ grid = Grid(    [ 50, 50 ],
                 (179, 179, 179),
                 thickness = 5.0,    )
 
-flows, empty = generator.generateFlows(grid, GRID_SIZE)
+paths, empty = generator.generateFlows(grid)
+
+flows = []
+for path in paths:
+    flows.append(   Flow(   grid,
+                            [ floor(random() * 256) for x in range(3) ],
+                            len(flows),
+                            path=path   )  )
 
 # update all the flows' graphics so they can be drawn
 for flow in flows:

@@ -133,7 +133,7 @@ def generateFlows(grid):
 
     tries = 0
 
-    while len(empty) > 0 and tries < 20:
+    while len(empty) > 0 and tries < 100:
         # sort the empty cells in order of ascending degree
         empty.sort( key = lambda cell : grid.degree(cell) )
 

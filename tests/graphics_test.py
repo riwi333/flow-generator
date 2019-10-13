@@ -1,6 +1,7 @@
 import pyglet
-import graphics
-import grid
+
+from context import Grid
+from context import graphics
 
 """
 quick tests to make sure drawing functions are correct (this should be deleted once fully tested)
@@ -14,7 +15,7 @@ window = pyglet.window.Window(WINDOW_WIDTH, WINDOW_HEIGHT)
 test_batch = pyglet.graphics.Batch()
 
 # [ Grid() ]
-grid_tests = [  grid.Grid(  [ 50, 400 ],
+grid_tests = [  Grid(       [ 50, 400 ],
                             125,
                             100,
                             5,
@@ -23,7 +24,7 @@ grid_tests = [  grid.Grid(  [ 50, 400 ],
                             alpha = True,
                             thickness = 2.0 ),
 
-                grid.Grid(  [ 750, 50 ],    # TODO: need to update Grid so it resizes with the window
+                Grid(       [ 750, 50 ],    # TODO: need to update Grid so it resizes with the window
                             150,
                             300,
                             6,
@@ -34,7 +35,7 @@ grid_tests = [  grid.Grid(  [ 50, 400 ],
                             alpha = True,
                             labelColor = (0, 0, 255, 255)   ),
 
-                grid.Grid(  [ 350, 350 ],
+                Grid(       [ 350, 350 ],
                             275,
                             150,
                             4,

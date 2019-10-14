@@ -1,3 +1,9 @@
 # ignore __pycache__ files
 *.pyc
 *.pyo
+
+# ignore init files
+__init__.py
+
+# ignore development log
+dev.txt

@@ -172,7 +172,7 @@ def generateFlows(grid):
 
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
-            parents = getDegreeMinimizedShortestPaths(grid, empty, source)
+            parents = getDegreeMinimizedShortestPaths(grid, source, empty=empty)
 
             """
             # DEBUG

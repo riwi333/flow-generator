@@ -9,4 +9,5 @@ sys.path.insert(0, os.path.abspath('../flow-generator'))
 
 from grid import Grid
 from flow import Flow
+import generator
 import graphics

@@ -1,11 +1,10 @@
 from context import Grid
-import copy
-
-FAILURE_MESSAGE = "Incorrect path generated"
 
 """
 helper functions for getDegreeMinimizedShortestPaths() test cases
 """
+
+FAILURE_MESSAGE = "Incorrect path generated"
 
 def getGrid(rows, cols):
     """

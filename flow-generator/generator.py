@@ -10,21 +10,31 @@ functions for handling flow generation
 
 """
 
-def getDegreeMinimizedShortestPaths(grid, empty, source):
+# TODO: develop function combinePaths() to selectively combine paths legally *after*
+# the flow generation process to reduce the number of total flows in the grid (sometimes)
+# several 3- or 4-cell paths are generated which could be combined for a better overall
+# flow generation; OR do this during flow generation
+
+def getDegreeMinimizedShortestPaths(grid, source, empty=None):
     """
     find the shortest paths from the start cell to all reachable unoccupied cells in the grid with
     minimum total cells.emptyDegree()
 
-    @param  grid        :   grid of the starting cell
-    @param  empty       :   list of all tuples of unoccupied cells in this grid
-    @param  source      :   starting cell we find paths for
-    @param
+    @param      grid        :   grid of the starting cell
+    @param      source      :   starting cell we find paths for
+    @optional   empty       :   list of all tuples of unoccupied cells in this grid
 
     @return             :   a dictionary giving the parent cell of each cell in its shortest path (or None if
                             the cell is unreachable)
     """
 
     # use Dijkstra to find all SSSPs with w(u, v) = grid.degree(v)
+
+    if empty == None:
+        empty = []
+        for cell in grid.getAllCellCoordinates():
+            if grid.isEmpty(cell):
+                empty.append(cell)
 
     assert len(empty) > 0, "No unoccupied cells available"
     assert grid.isEmpty(source), "Source cell is already occupied"
@@ -128,6 +138,8 @@ def generateFlows(grid):
                         of all the cell coordinate tuples that
                         are still unoccupied
     """
+
+    # TODO: make the first flow path a random walk instead of being calculated
 
     final_paths, empty, index = [], grid.getAllCellCoordinates(), 0
 

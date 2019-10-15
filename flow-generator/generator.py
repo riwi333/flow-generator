@@ -43,39 +43,56 @@ def getDegreeMinimizedShortestPaths(grid, source):
     # set the maximum distance larger than any possible total degree of a path
     MAX_DISTANCE = 4 * len(grid.unoccupied)
 
-    # initalize vertex "distances" (distance in this function refers to the sum
-    # of the degrees of cells in paths from the source cell)
-    distances = { cell : MAX_DISTANCE for cell in grid.unoccupied }
+    # initialize distance labels and set of unvisited, unoccupied cells (ignoring occupied cells)
+    unvisited = set(list(grid.unoccupied))
+    distances = { cell : MAX_DISTANCE for cell in unvisited }
     distances[source] = 0
 
-    # initialize list of unvisited cells (ignoring occupied cells)
-    unvisited = list(grid.unoccupied)
+    # initialize buckets; each bucket is a dictionary mapping a distance
+    # from the source cell to a set of cells currently marked with that distance;
+    # ex. if distances[v] = 5 during some iteration, buckets[5] would be
+    # the only bucket to contain v
+    buckets, index = { 0 : { source }, MAX_DISTANCE : set() }, 0
+    for cell in unvisited:
+        if not cell in buckets[0]:
+            buckets[MAX_DISTANCE].add(cell)
 
     # initialize returned objects
     parents = { cell : None for cell in grid.unoccupied }
 
     while len(unvisited) > 0:
-        min_distance = MAX_DISTANCE + 1
-        min_cell = None
+        # search the buckets for the first non-empty one either at or after
+        # the current search index
+        while not index in buckets or len(buckets[index]) == 0:
+            index += 1
 
-        # find the cell with minimum calculated distance from the source
-        for cell in unvisited:
-            if distances[cell] < min_distance:
-                min_distance, min_cell = distances[cell], cell
+        # pop any cell from the current bucket and use it as the minimum distance
+        # cell for Dijkstra's algorithm
+        min_cell = buckets[index].pop()
 
         # mark this cell as visited
         unvisited.remove(min_cell)
 
-        # iterate through all neighbors of the minimum-distance cell
+        # iterate through all unvisited neighbors of the minimum-distance cell
         for dir in direction.directions:
             adj_cell = direction.next[dir](*min_cell)
 
             if grid.inBounds(adj_cell) and grid.isEmpty(adj_cell) and adj_cell in unvisited:
                 # if we can reach this neighbor cell "faster" (with lesser total degree) via the current
-                # minimum-distance cell, update the neighbor's cell distance and make the minimum-distance
-                # cell its parent
+                # minimum-distance cell, update the neighbor cell's information
                 if distances[adj_cell] > distances[min_cell] + grid.degree(adj_cell):
+                    # update the neighbor cell's distance label
+                    old_distance = distances[adj_cell]
                     distances[adj_cell] = distances[min_cell] + grid.degree(adj_cell)
+
+                    # update the bucket position of this updated cell; note that we only create
+                    # a bucket when we don't already have one for the updated distance
+                    buckets[old_distance].remove(adj_cell)
+                    if not distances[adj_cell] in buckets:
+                        buckets[distances[adj_cell]] = set()
+                    buckets[distances[adj_cell]].add(adj_cell)
+
+                    # make the minimum-distance cell its parent
                     parents[adj_cell] = min_cell
 
     return parents

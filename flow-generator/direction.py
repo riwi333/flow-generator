@@ -24,9 +24,22 @@ next = {
 HEAD = 0
 TAIL = 1
 
+def isAdjacent(cell1, cell2):
+    """
+    determine whether the two given cells are adjacent
+
+    @param  cell1   :   2-tuple of first cell's coordinates
+    @param  cell2   :   2-tuple of second cell's coordinates
+
+    @return         :   True if the cells are adjacent; False otherwise
+    """
+
+    return abs(cell1[0] - cell2[0]) + abs(cell1[1] - cell2[1]) == 1
+
 def adjacentDirection(cell1, cell2):
     """
-    determine whether two given cells are adjacent or not
+    determine whether two given cells are adjacent or not AND return the direction
+    needed to travel from cell1 to cell2 if they are
 
     @param  cell1   :   2-tuple of first cell's coordinates
     @param  cell2   :   2-tuple of second cell's coordinates

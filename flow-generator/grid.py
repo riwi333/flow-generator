@@ -29,6 +29,7 @@ class Grid:
     @attribute  labelBatch  :   batch of all labels generated for the grid
                                 (None if the grid is unlabelled)
     @attribute  values      :   optional mapping of grid cells to some set of values
+    @attribute  unoccupied  :   set of cells unmapped to any value
     """
 
     @staticmethod
@@ -106,6 +107,11 @@ class Grid:
         # initialize the cell-value mapping (all un-assigned by being set to None)
         self.values = { cell : None for cell in self.getAllCellCoordinates() }
 
+        # create a set (hashtable) to store unoccupied cells in the grid; since all
+        # elements of a set are unique (and thus hashable), we have O(1) element
+        # removal, insertion, and check of whether a cell is unoccupied on average
+        self.unoccupied = set( self.getAllCellCoordinates() )
+
     def isEmpty(self, cell):
         """
         determine if this cell has been assigned a value or not
@@ -115,7 +121,7 @@ class Grid:
         @return         :   boolean of whether cell has been assigned
         """
 
-        return self.values[cell] == None
+        return cell in self.unoccupied
 
     def inBounds(self, cell):
         """
@@ -151,6 +157,23 @@ class Grid:
                 valueDeg = valueDeg + 1
 
         return valueDeg
+
+    def pathDegree(self, cell, path):
+        """
+        find number of cells in the given path that are adjacent to the given cell
+
+        @param  cell    :   cell we check adjacency for
+        @param  path    :   list of cells we check for adjacency
+
+        @return         :   number of cells in the path adjacent to the cell
+        """
+
+        pathDegree = 0
+
+        for path_cell in path:
+            pathDegree += int(direction.isAdjacent(cell, path_cell))
+
+        return pathDegree
 
     def degree(self, cell):
         """
@@ -189,6 +212,7 @@ class Grid:
         """
 
         self.values[cell] = value
+        self.unoccupied.remove(cell)
 
     def resetCell(self, cell):
         """
@@ -198,6 +222,7 @@ class Grid:
         """
 
         self.values[cell] = None
+        self.unoccupied.add(cell)
 
     def clearValues(self):
         """
@@ -206,7 +231,7 @@ class Grid:
         """
 
         for cell in self.getAllCellCoordinates():
-            self.values[cell] = None
+            self.resetCell(cell)
 
     def draw(self):
         """

@@ -28,7 +28,7 @@ class Flow:
                                     circles
     """
 
-    def __init__(self, grid, color, index, path=[]):
+    def __init__(self, grid, color, index, path=None):
         """
         constructor for the Flow class
 
@@ -39,9 +39,12 @@ class Flow:
         self.color = color
         self.index = index
 
-        self.path = path
-        for cell in self.path:
-            self.grid.setCell(cell, self.index)
+        if path is None:
+            self.path = []
+        else:
+            self.path = path
+            for cell in self.path:
+                self.grid.setCell(cell, self.index)
 
         self.flowBatch = pyglet.graphics.Batch()
         self.pathLines = []

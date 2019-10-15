@@ -3,9 +3,13 @@ import pyglet
 from random import random, seed
 from datetime import datetime
 from math import floor
+import sys
 
 """
 tool allowing you to draw custom flows on a grid
+
+Grid dimensions should be provided via the command line; if only
+one dimension is provided, the grid is assumed to be square
 
 Controls:
 - Use the arrows keys to move the cursor around
@@ -17,17 +21,39 @@ while drawing it)
 
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
-GRID_SIZE = 8
+GRID_ORIGIN = (50, 50)
+GRID_WIDTH = WINDOW_WIDTH - 2 * GRID_ORIGIN[0]
+GRID_HEIGHT = WINDOW_HEIGHT - 2 * GRID_ORIGIN[1]
+
+DEFAULT_ROWS = 5
+DEFAULT_COLS = 5
+
+# get the grid dimensions from the command line arguments
+try:
+    rows = int(sys.argv[1])
+    cols = int(sys.argv[2])
+
+except ValueError:
+    print("Grid dimensions must be integers; using a 5x5 grid by default")
+    rows, cols = DEFAULT_ROWS, DEFAULT_COLS
+
+except IndexError:
+    if len(sys.argv) == 1:
+        print("No dimensions provided; using a 5x5 grid by default")
+        rows, cols = DEFAULT_ROWS, DEFAULT_COLS
+    else:
+        cols = rows
 
 # seed the random generator
 seed(datetime.now())
 
 # create the window and the grid
 window = pyglet.window.Window(WINDOW_WIDTH, WINDOW_HEIGHT)
-grid = Grid(    [ 50, 50 ],
-                700, 400,
-                GRID_SIZE,
-                GRID_SIZE,
+grid = Grid(    GRID_ORIGIN,
+                GRID_WIDTH,
+                GRID_HEIGHT,
+                rows,
+                cols,
                 (179, 179, 179),
                 thickness = 5.0,    )
 

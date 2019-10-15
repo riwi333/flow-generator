@@ -40,10 +40,13 @@ class Flow:
         self.index = index
 
         if path is None:
-            self.path = []
-        else:
-            self.path = path
-            for cell in self.path:
+            path = []
+
+        # if a path is provided, mark the grid cells as occupied, if they
+        # aren't already
+        self.path = path
+        for cell in self.path:
+            if self.grid.isEmpty(cell):
                 self.grid.setCell(cell, self.index)
 
         self.flowBatch = pyglet.graphics.Batch()

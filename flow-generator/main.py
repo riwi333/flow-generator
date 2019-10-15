@@ -41,7 +41,7 @@ grid = Grid(    GRID_ORIGIN,
                 (179, 179, 179),
                 thickness = 5.0,    )
 
-paths, empty = generator.generateFlows(grid)
+paths = generator.generateFlows(grid)
 
 # make sure all cells in the list of paths are unique
 flatten = lambda multi : [x for arr in multi for x in arr]

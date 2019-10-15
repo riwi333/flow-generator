@@ -37,11 +37,11 @@ for i in range(MAX_SIZE - MIN_SIZE + 1):
     for j in range(NUM_TESTS):
         # run the flow generation algorithm and measure its runtime
         initial_time = process_time()
-        paths, remaining = generator.generateFlows(grids[i])
+        paths = generator.generateFlows(grids[i])
         runtime += process_time() - initial_time
 
         # if there are no more empty cells in the grid, generateFlows() succeeded
-        if len(remaining) == 0:
+        if len(grids[i].unoccupied) == 0:
             success += 1
 
         # clear all the marked values in the grid to reset it for the next test

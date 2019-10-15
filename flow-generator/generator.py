@@ -6,6 +6,13 @@ from math import floor, ceil
 import direction
 
 """
+# DEBUG
+from time import process_time
+gdmp_calls = []
+gec_calls = []
+"""
+
+"""
 functions for handling flow generation
 
 """
@@ -15,43 +22,37 @@ functions for handling flow generation
 # several 3- or 4-cell paths are generated which could be combined for a better overall
 # flow generation; OR do this during flow generation
 
-def getDegreeMinimizedShortestPaths(grid, source, empty=None):
+def getDegreeMinimizedShortestPaths(grid, source):
     """
     find the shortest paths from the start cell to all reachable unoccupied cells in the grid with
-    minimum total cells.emptyDegree()
+    minimum total cells.degree()
 
     @param      grid        :   grid of the starting cell
     @param      source      :   starting cell we find paths for
-    @optional   empty       :   list of all tuples of unoccupied cells in this grid
 
-    @return             :   a dictionary giving the parent cell of each cell in its shortest path (or None if
-                            the cell is unreachable)
+    @return                 :   a dictionary giving the parent cell of each cell in its shortest path (or None if
+                                the cell is unreachable)
     """
 
-    # use Dijkstra to find all SSSPs with w(u, v) = grid.degree(v)
+    # use Dial's algorithm (same as Dijkstra but optimized for bounded integer weights) to
+    # find all SSSPs with w(u, v) = grid.degree(v)
 
-    if empty == None:
-        empty = []
-        for cell in grid.getAllCellCoordinates():
-            if grid.isEmpty(cell):
-                empty.append(cell)
-
-    assert len(empty) > 0, "No unoccupied cells available"
+    assert len(grid.unoccupied) > 0, "No unoccupied cells available"
     assert grid.isEmpty(source), "Source cell is already occupied"
 
     # set the maximum distance larger than any possible total degree of a path
-    MAX_DISTANCE = 4 * len(empty)
+    MAX_DISTANCE = 4 * len(grid.unoccupied)
 
     # initalize vertex "distances" (distance in this function refers to the sum
     # of the degrees of cells in paths from the source cell)
-    distances = { cell : MAX_DISTANCE for cell in empty }
+    distances = { cell : MAX_DISTANCE for cell in grid.unoccupied }
     distances[source] = 0
 
     # initialize list of unvisited cells (ignoring occupied cells)
-    unvisited = list(empty)
+    unvisited = list(grid.unoccupied)
 
     # initialize returned objects
-    parents = { cell : None for cell in empty }
+    parents = { cell : None for cell in grid.unoccupied }
 
     while len(unvisited) > 0:
         min_distance = MAX_DISTANCE + 1
@@ -79,23 +80,29 @@ def getDegreeMinimizedShortestPaths(grid, source, empty=None):
 
     return parents
 
-def getEmptyComponents(grid, empty):
+def getEmptyComponents(grid, empty=None):
     """
     perform a BFS to identify the connected components of empty cells in the grid
 
-    @param  grid        :   grid containing the relevant cells
-    @param  empty       :   list of all tuples of unoccupied cells in this grid
+    @param      grid    :   grid containing the relevant cells
+    @optional   empty   :   list of unoccupied cells to use *instead* of the grid's set of
+                            unoccupied cells
 
     @return             :   list of lists of cells separated by components
     """
 
-    assert len(empty) > 0
+    if empty is None:
+        unoccupied = list(grid.unoccupied)
+    else:
+        unoccupied = list(empty)
+
+    assert len(unoccupied) > 0
 
     # initialize the queue and visited dictionary
-    visited, queue, components = { cell : False for cell in empty }, [], []
+    visited, queue, components = { cell : False for cell in unoccupied }, [], []
 
     # push the source cell of the first component into the queue
-    queue.append( empty[0] )
+    queue.append(unoccupied[0])
     components.append([])
 
     while len(queue) > 0:
@@ -133,46 +140,53 @@ def generateFlows(grid):
 
     @param  grid    :   grid the flows will be placed on
 
-    @return         :   a tuple of 0) list containing all viable
-                        paths used to fill the grid and 1) a list
-                        of all the cell coordinate tuples that
-                        are still unoccupied
+    @return         :   list containing all viable paths used to fill the grid
     """
 
     # TODO: make the first flow path a random walk instead of being calculated
 
-    final_paths, empty, index = [], grid.getAllCellCoordinates(), 0
+    final_paths, index = [], 0
 
     tries = 0
 
-    while len(empty) > 0 and tries < 100:
+    while len(grid.unoccupied) > 0 and tries < 100:
         # sort the empty cells in order of ascending degree
-        empty.sort( key = lambda cell : grid.degree(cell) )
+        sorted_unoccupied = sorted(grid.unoccupied, key = lambda cell : grid.degree(cell))
 
         """
         # DEBUG
         print("Flow #" + str(index) + ":")
-        print("Unoccupied: " + str(empty))
+        print("Unoccupied: " + str(grid.unoccupied))
         """
 
         # choose a cell to start this flow with
         attempts = 0
-        while attempts < len(empty):
+        while attempts < len(grid.unoccupied):
             # get the empty cell of lowest degree that we haven't tried yet (the "source" of this flow)
 
             # TODO: randomize which lowest-degree cell we use; ex. if there's multiple 1-degree cells,
             # randomly choose one of them instead of whichever one gets sorted first in the empty list
 
-            source = empty[attempts]
+            source = sorted_unoccupied[attempts]
 
             """
             # DEBUG
             print("Source: " + str(source))
             """
 
+            """
+            # DEBUG
+            start_time = process_time()
+            """
+
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
-            parents = getDegreeMinimizedShortestPaths(grid, source, empty=empty)
+            parents = getDegreeMinimizedShortestPaths(grid, source)
+
+            """
+            # DEBUG
+            gdmp_calls.append(process_time() - start_time)
+            """
 
             """
             # DEBUG
@@ -239,7 +253,7 @@ def generateFlows(grid):
                     # test this path to see if occupying its cells will create illegal components
                     # NOTE: if the path fills its component (remaining_in_block' == 0) we  don't need to check for this
                     if remaining_in_block > 0:
-                        test_empty = list(empty)
+                        test_empty = list(sorted_unoccupied)
 
                         # temporarily mark the cells in this path as occupied so we can find the resulting unoccupied components
                         test_empty.remove(source)
@@ -248,8 +262,18 @@ def generateFlows(grid):
                             test_empty.remove(cell)
                             grid.setCell(cell, index)
 
+                        """
+                        # DEBUG
+                        start_time = process_time()
+                        """
+
                         # get the unoccupied components that would be made by this path
-                        components = getEmptyComponents(grid, test_empty)
+                        components = getEmptyComponents(grid, empty=test_empty)
+
+                        """
+                        # DEBUG
+                        gec_calls.append(process_time() - start_time)
+                        """
 
                         """
                         # DEBUG
@@ -306,10 +330,9 @@ def generateFlows(grid):
 
                 # remove all cells in the path from the list of unoccupied cells
                 for cell in path:
-                    assert cell in empty, "Final path cell " + str(cell) + " already occupied"
+                    assert grid.isEmpty(cell), "Final path cell " + str(cell) + " already occupied"
 
                     grid.setCell(cell, index)
-                    empty.remove(cell)
 
                 # update the flow index and start the next flow
                 index += 1
@@ -326,7 +349,20 @@ def generateFlows(grid):
 
         tries += 1
 
-    return (final_paths, empty)
+    """
+    # DEBUG
+    if len(grid.unoccupied) == 0:
+        num_gdmp = len(gdmp_calls)
+        num_gec = len(gec_calls)
+
+        av_gdmp = sum(gdmp_calls) / num_gdmp
+        av_gec = sum(gec_calls) / num_gec
+
+        print(str(num_gdmp) + " gdmp calls; average = " + str(av_gdmp))
+        print(str(num_gec) + " gec calls; average = " + str(av_gec))
+    """
+
+    return final_paths
 
 def randomStep(grid, path, last_direction=None, flow_index=None):
     """

@@ -5,12 +5,10 @@ from datetime import datetime
 from math import floor, ceil
 import direction
 
-"""
 # DEBUG
 from time import process_time
 gdmp_calls = []
 gec_calls = []
-"""
 
 """
 functions for handling flow generation
@@ -149,6 +147,9 @@ def generateFlows(grid):
 
     tries = 0
 
+    # seed the random generator
+    seed(datetime.now())
+
     while len(grid.unoccupied) > 0 and tries < 100:
         # sort the empty cells in order of ascending degree
         sorted_unoccupied = sorted(grid.unoccupied, key = lambda cell : grid.degree(cell))
@@ -174,19 +175,15 @@ def generateFlows(grid):
             print("Source: " + str(source))
             """
 
-            """
             # DEBUG
             start_time = process_time()
-            """
 
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
             parents = getDegreeMinimizedShortestPaths(grid, source)
 
-            """
             # DEBUG
             gdmp_calls.append(process_time() - start_time)
-            """
 
             """
             # DEBUG
@@ -232,9 +229,25 @@ def generateFlows(grid):
                 print(str(sink) + ": " + str(minimized_paths[sink]))
             """
 
-            # find which sinks are of legal length (at least 3 cells long) and fit properly within the block
-            potential_sinks = []
-            for sink in minimized_paths.keys():
+            # randomize a permutation of the minimized paths' sinks that attempts to given longer paths lesser indices
+            sinks, randomized_sinks = list(minimized_paths.keys()), []
+            for i in range(len(minimized_paths.keys())):
+                # weigh the probability of choosing any path linearly by its length
+                total_length = float(sum([ len(minimized_paths[sink]) for sink in sinks ]))
+                weights = [ len(minimized_paths[sink]) / total_length for sink in sinks ]
+                choice = choices(sinks, weights = weights, k = 1)[0]
+                randomized_sinks.append(choice)
+                sinks.remove(choice)
+
+            """
+            # DEBUG
+            print([ len(minimized_paths[sink]) for sink in randomized_sinks ])
+            """
+
+            # test the randomized list of sinks until we find one that's legal length (at least 3 cells long) and fits
+            # properly within the block
+            chosen_sink = None
+            for sink in randomized_sinks:
                 path_length = len(minimized_paths[sink]) + 1
 
                 # find out how many unoccupied cells would be left in the source's component if we used this
@@ -262,18 +275,14 @@ def generateFlows(grid):
                             test_empty.remove(cell)
                             grid.setCell(cell, index)
 
-                        """
                         # DEBUG
                         start_time = process_time()
-                        """
 
                         # get the unoccupied components that would be made by this path
                         components = getEmptyComponents(grid, empty=test_empty)
 
-                        """
                         # DEBUG
                         gec_calls.append(process_time() - start_time)
-                        """
 
                         """
                         # DEBUG
@@ -295,20 +304,15 @@ def generateFlows(grid):
                         for cell in minimized_paths[sink]:
                             grid.resetCell(cell)
 
-                    # if all the resulting components are legal, mark this path as usable
+                    # if all the resulting components are legal, use this as the next path
                     if satisfied:
-                        assert satisfied == True
-                        potential_sinks.append(sink)
+                        chosen_sink = sink
+                        break
 
             # make sure at least one path is legal
-            if len(potential_sinks) > 0:
-                # randomly choose a path that works and create the flow for it; we weight each path's
-                # probability of being chosen so that longer paths are more likely to be used
-                weights = [ len(potential_sinks[i]) for i in range(len(potential_sinks)) ]
-                sink = choices(potential_sinks, weights=weights)[0]
-
+            if not chosen_sink == None:
+                # add the path with this sink to the list of calculated paths
                 path = [ source ] + minimized_paths[sink]
-
                 final_paths.append(path)
 
                 """

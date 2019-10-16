@@ -11,7 +11,8 @@ MAX_SIZE = 15       # maximum grid size to generate flows for
 NUM_TESTS = 30      # number of flow generations to do per grid size
 
 # include current git master branch commit information to help track performance progress
-current_commit = git.Repo(search_parent_directories=True).heads.master.commit
+current_repo = git.Repo(search_parent_directories=True)
+current_commit = current_repo.heads.master.commit
 
 # figure out date and time via the count of seconds from epoch to the commit
 commit_time = current_commit.authored_date
@@ -20,7 +21,10 @@ month, day, year = time_struct.tm_mon, time_struct.tm_mday, time_struct.tm_year
 hour, minute, second = time_struct.tm_hour, time_struct.tm_min, time_struct.tm_sec
 datestring = str(month) + "/" + str(day) + "/" + str(year) + " " + str(hour) + ":" + str(minute) + ":" + str(second)
 
-print("Commit: " + str(current_commit.message.strip()))
+#print("Commit ID: " + bytes.fromhex(str(current_commit.binsha)).decode())
+print("Commit ID: " + current_repo.head.object.hexsha)
+print("Commit branch: " + current_repo.active_branch.name)
+print("\"" + str(current_commit.message.strip()) + "\"")
 print(datestring + "\n")
 
 # make a grid for each measured size (graphics-related sizing doesn't matter here)

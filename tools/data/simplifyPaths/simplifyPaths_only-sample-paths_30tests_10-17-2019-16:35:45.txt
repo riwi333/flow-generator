@@ -1,0 +1,25 @@
+Commit ID: ea7f65023efcae648deaf590c7fed3eaea4713ec
+Commit branch: only-sample-paths
+"fixed outputted commit information in performance scripts to match active branch"
+10/17/2019 16:35:45
+
+Grid size      Generation time            Simplification time        Initial # paths            Final # paths
+4x4            0.013                      0.000                      3.900                      3.100
+5x5            0.015                      0.000                      5.250                      3.600
+6x6            0.018                      0.001                      6.650                      4.700
+7x7            0.025                      0.001                      8.250                      5.650
+8x8            0.035                      0.002                      9.600                      7.100
+9x9            0.052                      0.004                      11.900                     8.500
+10x10          0.082                      0.006                      13.300                     9.300
+11x11          0.128                      0.010                      16.400                     11.500
+12x12          0.191                      0.015                      18.750                     12.750
+13x13          0.267                      0.020                      20.550                     13.950
+14x14          0.378                      0.031                      23.350                     15.500
+15x15          0.510                      0.045                      25.800                     17.600
+16x16          0.693                      0.054                      27.500                     18.950
+17x17          0.905                      0.069                      31.400                     21.900
+18x18          1.208                      0.104                      35.950                     24.450
+19x19          1.683                      0.154                      39.950                     27.150
+20x20          2.235                      0.169                      40.100                     28.500
+
+Performed 20 tests per size

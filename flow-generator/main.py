@@ -6,6 +6,20 @@ from math import floor
 from random import random
 import sys
 
+"""
+run the path generation algorithm and display the resulting solved flow puzzle
+
+TODO:
+    -   add option to see puzzle with or without the attached puzzles (see unsolved versions)
+
+    -   (eventually) add option to play puzzle with controls similar to 'tools/selfdraw.py'
+
+    -   prevent darker/less-visible colors from being used, and don't repeat any colors
+
+    -   randomize grid dimension size if no arguments are given
+
+"""
+
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 540
 GRID_ORIGIN = (50, 50)

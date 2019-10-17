@@ -7,27 +7,28 @@ import direction
 """
 functions for handling path generation
 
-"""
+TODO:
+    -   randomize initial path and choice of source cell, making sure that degree(source)
+        is still minimzed
 
-# TODO:
-#   -   randomize initial path and choice of source cell, making sure that degree(source)
-#       is still minimzed
-#
-#   -   more unit tests!
-#
-#   -   figure out conditions to allow components of size 4 and 5 (not all components of
-#       those sizes will make illegal paths, but right now the algorithm throws them out
-#
-#   -   find a way to measure the "uniqueness" of a given set of paths; the algorithm
-#       should be able to generate several sets that are decently different from each other
-#
-#   -   actually write a README.md file for this
-#
-#   -   test algorithm on rectangular grids (i.e. 5x6, 9x11); alter the Grid class to
-#       allow arbitrary grid shapes? (make a new branch for this)
-#
-#   -   try to implement Dial's algorithm again?
-#
+    -   remove 'tries' variable and its conditions
+
+    -   more unit tests!
+
+    -   figure out conditions to allow components of size 4 and 5 (not all components of
+        those sizes will make illegal paths, but right now the algorithm throws them out
+
+    -   find a way to measure the "uniqueness" of a given set of paths; the algorithm
+        should be able to generate several sets that are decently different from each other
+
+    -   actually write a README.md file for this
+
+    -   test algorithm on rectangular grids (i.e. 5x6, 9x11); alter the Grid class to
+        allow arbitrary grid shapes? (make a new branch for this)
+
+    -   try to implement Dial's algorithm again?
+
+"""
 
 def getDegreeMinimizedPaths(grid, source):
     """
@@ -158,8 +159,9 @@ def generatePaths(grid):
     seed(datetime.now())
 
     while len(grid.unoccupied) > 0 and tries < 100:
-        # sort the empty cells in order of ascending degree
+        # sort the empty cells in order of ascending degree, and keep track of ones we've tried already
         sorted_unoccupied = sorted(grid.unoccupied, key = lambda cell : grid.degree(cell))
+        attempted = { source : False for source in sorted_unoccupied }
 
         """
         # DEBUG
@@ -170,12 +172,27 @@ def generatePaths(grid):
         # choose a cell to start this path with
         attempts = 0
         while attempts < len(grid.unoccupied):
-            # get the empty cell of lowest degree that we haven't tried yet (the "source" of this path)
+            # randomly pick an empty cell of lowest degree that we haven't tried yet (the "source" of this path)
+            source_choices, source_degree, source = [], 1, None
+            for i in range(len(sorted_unoccupied) + 1):
+                # if we're looking at a cell with non-minimum degree (or we hit the end of the list), stop searching and randomly choose a cell
+                # from our potential choices
+                if i == len(sorted_unoccupied) or grid.degree(sorted_unoccupied[i]) > source_degree:
+                    if len(source_choices) > 0:
+                        source = choices(source_choices)[0]
+                        attempted[source] = True
+                        break
 
-            # TODO: randomize which lowest-degree cell we use; ex. if there's multiple 1-degree cells,
-            # randomly choose one of them instead of whichever one gets sorted first in the empty list
+                    # if there are no potential choices (no cells with our current minimum degree), increment the
+                    # degree we're looking for
+                    else:
+                        source_degree += 1
 
-            source = sorted_unoccupied[attempts]
+                # if this cell hasn't been tried yet, add it to our list of potential sources
+                if attempted[sorted_unoccupied[i]] == False:
+                    source_choices.append(sorted_unoccupied[i])
+
+            assert not source == None, "No source cell chosen"
 
             """
             # DEBUG
@@ -222,6 +239,8 @@ def generatePaths(grid):
 
                 # since we follow each path from the sink to the source, we need to reverse the current paths
                 minimized_paths[cell].reverse()
+
+            assert len(minimized_paths.keys()) > 0, "No minimized paths calculated"
 
             """
             # DEBUG
@@ -298,6 +317,8 @@ def generatePaths(grid):
                         grid.resetCell(source)
                         for cell in minimized_paths[sink]:
                             grid.resetCell(cell)
+
+                            assert grid.isEmpty(cell)
 
                     # if all the resulting components are legal, use this as the next path
                     if satisfied:

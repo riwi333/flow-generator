@@ -1,0 +1,25 @@
+Commit ID: 4957d5dcb84bfd0ed3b45f0ff867453fd26d90b6
+Commit branch: only-sample-paths
+"randomized choice of minimized source cell"
+10/17/2019 18:21:57
+
+Grid size      Success rate      Successful runtime    Failed runtime        
+4x4            1.000             0.001                 nan                   
+5x5            0.967             0.002                 0.097                 
+6x6            1.000             0.003                 nan                   
+7x7            1.000             0.005                 nan                   
+8x8            1.000             0.009                 nan                   
+9x9            0.933             0.014                 0.099                 
+10x10          0.967             0.018                 0.086                 
+11x11          0.933             0.027                 0.113                 
+12x12          1.000             0.037                 nan                   
+13x13          0.900             0.047                 0.150                 
+14x14          0.967             0.070                 0.197                 
+15x15          0.967             0.101                 0.207                 
+16x16          0.933             0.117                 0.236                 
+17x17          1.000             0.188                 nan                   
+18x18          0.967             0.235                 0.335                 
+19x19          0.867             0.272                 0.322                 
+20x20          0.933             0.323                 0.604                 
+
+Performed 30 tests per size

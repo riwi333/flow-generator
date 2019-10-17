@@ -1,21 +1,15 @@
 from grid import Grid
-from flow import Flow
 from random import random, shuffle, seed, choices
 from datetime import datetime
 from math import floor, ceil
 import direction
 
 """
-functions for handling flow generation
+functions for handling path generation
 
 """
 
 # TODO:
-#   -   develop function combinePaths() to randomly combine paths legally after OR during
-#       the flow generation process to reduce the number of total flows in the grid; the
-#       probability of combining two paths should decrease as the number of flows in the
-#       grid decreases (ideally, an NxN grid should N +/- 1 flows)
-#
 #   -   randomize initial path and choice of source cell, making sure that degree(source)
 #       is still minimzed
 #
@@ -35,20 +29,19 @@ functions for handling flow generation
 #   -   try to implement Dial's algorithm again?
 #
 
-def getDegreeMinimizedShortestPaths(grid, source):
+def getDegreeMinimizedPaths(grid, source):
     """
-    find the shortest paths from the start cell to all reachable unoccupied cells in the grid with
+    find paths from the start cell to all reachable unoccupied cells in the grid with
     minimum total cells.degree()
 
     @param      grid        :   grid of the starting cell
     @param      source      :   starting cell we find paths for
 
-    @return                 :   a dictionary giving the parent cell of each cell in its shortest path (or None if
+    @return                 :   a dictionary giving the parent cell of each cell in its minimized path (or None if
                                 the cell is unreachable)
     """
 
-    # use Dial's algorithm (same as Dijkstra but optimized for bounded integer weights) to
-    # find all SSSPs with w(u, v) = grid.degree(v)
+    # use Dijkstra's algorithm to find all SSSPs with w(u, v) = grid.degree(v)
 
     assert len(grid.unoccupied) > 0, "No unoccupied cells available"
     assert grid.isEmpty(source), "Source cell is already occupied"
@@ -128,7 +121,6 @@ def getEmptyComponents(grid, empty=None):
             # add neighbors of the popped cell that have not been visited to the queue
             for dir in direction.directions:
                 neighbor = direction.next[dir](*cell)
-
                 if grid.inBounds(neighbor) and grid.isEmpty(neighbor) and visited[neighbor] == False:
                     visited[neighbor] = True
                     queue.append(neighbor)
@@ -147,11 +139,11 @@ def getEmptyComponents(grid, empty=None):
 
     return components
 
-def generateFlows(grid):
+def generatePaths(grid):
     """
-    randomly generate solved flow puzzles
+    randomly generate paths to create solved Flow puzzles
 
-    @param  grid    :   grid the flows will be placed on
+    @param  grid    :   grid the paths will be placed in
 
     @return         :   list containing all viable paths used to fill the grid
     """
@@ -171,14 +163,14 @@ def generateFlows(grid):
 
         """
         # DEBUG
-        print("Flow #" + str(index) + ":")
+        print("Path #" + str(index) + ":")
         print("Unoccupied: " + str(grid.unoccupied))
         """
 
-        # choose a cell to start this flow with
+        # choose a cell to start this path with
         attempts = 0
         while attempts < len(grid.unoccupied):
-            # get the empty cell of lowest degree that we haven't tried yet (the "source" of this flow)
+            # get the empty cell of lowest degree that we haven't tried yet (the "source" of this path)
 
             # TODO: randomize which lowest-degree cell we use; ex. if there's multiple 1-degree cells,
             # randomly choose one of them instead of whichever one gets sorted first in the empty list
@@ -192,7 +184,7 @@ def generateFlows(grid):
 
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
-            parents = getDegreeMinimizedShortestPaths(grid, source)
+            parents = getDegreeMinimizedPaths(grid, source)
 
             """
             # DEBUG
@@ -260,12 +252,12 @@ def generateFlows(grid):
                 path_length = len(minimized_paths[sink]) + 1
 
                 # find out how many unoccupied cells would be left in the source's component if we used this
-                # path for the next flow
+                # path next
                 remaining_in_block = block_size - path_length
 
                 assert remaining_in_block >= 0
 
-                # the block the flow resides in, if not empty, should have either 3 or at least 6 remaining unoccupied cells
+                # the block the path resides in, if not empty, should have either 3 or at least 6 remaining unoccupied cells
                 # NOTE: blocks of size 4, if arranged in a 2x2 square, cannot be filled legally; multiple arrangements of
                 # blocks of size 5 also cannot be filled legally; blocks with at least 6 unoccupied cells, however can
                 # always be filled legally
@@ -319,14 +311,6 @@ def generateFlows(grid):
                 final_paths.append(path)
 
                 """
-                flows.append(Flow(  grid,
-                                    color = [ floor(random() * 256) for x in range(3) ],
-                                    index = index,
-                                    path = path ))
-                """
-
-
-                """
                 # DEBUG
                 print("Path: " + str(path))
                 print("Path length: " + str(len(path)))
@@ -341,7 +325,7 @@ def generateFlows(grid):
 
                     grid.setCell(cell, index)
 
-                # update the flow index and start the next flow
+                # update the path index and start the next path
                 index += 1
                 break
 
@@ -424,39 +408,3 @@ def simplifyPaths(grid, paths):
             break
 
     return simplified
-
-def randomStep(grid, path, last_direction=None, flow_index=None):
-    """
-    add a cell to the path adjacent to its last cell (one step in a random walk)
-
-    @param      grid            :   grid the path is contained in
-    @param      path            :   ordered list of cells in the path
-    @optional   last_direction  :   last direction the walk traveled in
-    @optional   flow_index      :   index of flow the path is being made for
-
-    @return                     :   2-tuple of path with added cell and the
-                                    direction traveled in (or the original path
-                                    and None if no cell could be added)
-    """
-
-    # randomize which direction the next step is in from the last cell in the path
-    step_directions = list(direction.directions)
-    if not last_direction == None:
-        del step_directions[(last_direction + 2) % 4]
-    shuffle(step_directions)
-
-    # choose a cell in a direction that meets requirements
-    for dir in step_directions:
-        next_cell = direction.next[dir](*path[-1])
-
-        # the next cell needs to:
-        # 1) be in the grid
-        # 2) unoccupied
-        # 3) if flow is given, have a flow degree < 2
-
-        if grid.inBounds(next_cell) and grid.isEmpty(next_cell):
-            if flow_index == None or grid.valueDegree(next_cell, flow_index) < 2:
-                return ( path + [ next_cell ], dir )
-
-    # if we reach here, no cell could be added to the path
-    return ( path, None )

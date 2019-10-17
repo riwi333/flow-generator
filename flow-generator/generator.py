@@ -5,20 +5,35 @@ from datetime import datetime
 from math import floor, ceil
 import direction
 
-# DEBUG
-from time import process_time
-gdmp_calls = []
-gec_calls = []
-
 """
 functions for handling flow generation
 
 """
 
-# TODO: develop function combinePaths() to selectively combine paths legally *after*
-# the flow generation process to reduce the number of total flows in the grid (sometimes)
-# several 3- or 4-cell paths are generated which could be combined for a better overall
-# flow generation; OR do this during flow generation
+# TODO:
+#   -   develop function combinePaths() to randomly combine paths legally after OR during
+#       the flow generation process to reduce the number of total flows in the grid; the
+#       probability of combining two paths should decrease as the number of flows in the
+#       grid decreases (ideally, an NxN grid should N +/- 1 flows)
+#
+#   -   randomize initial path and choice of source cell, making sure that degree(source)
+#       is still minimzed
+#
+#   -   more unit tests!
+#
+#   -   figure out conditions to allow components of size 4 and 5 (not all components of
+#       those sizes will make illegal paths, but right now the algorithm throws them out
+#
+#   -   find a way to measure the "uniqueness" of a given set of paths; the algorithm
+#       should be able to generate several sets that are decently different from each other
+#
+#   -   actually write a README.md file for this
+#
+#   -   test algorithm on rectangular grids (i.e. 5x6, 9x11); alter the Grid class to
+#       allow arbitrary grid shapes? (make a new branch for this)
+#
+#   -   try to implement Dial's algorithm again?
+#
 
 def getDegreeMinimizedShortestPaths(grid, source):
     """
@@ -175,15 +190,9 @@ def generateFlows(grid):
             print("Source: " + str(source))
             """
 
-            # DEBUG
-            start_time = process_time()
-
             # find all directed edges of paths from this source cell to other empty cells with minimum total degree;
             # also get a list of cells in the source's component block (not including the source)
             parents = getDegreeMinimizedShortestPaths(grid, source)
-
-            # DEBUG
-            gdmp_calls.append(process_time() - start_time)
 
             """
             # DEBUG
@@ -275,14 +284,8 @@ def generateFlows(grid):
                             test_empty.remove(cell)
                             grid.setCell(cell, index)
 
-                        # DEBUG
-                        start_time = process_time()
-
                         # get the unoccupied components that would be made by this path
                         components = getEmptyComponents(grid, empty=test_empty)
-
-                        # DEBUG
-                        gec_calls.append(process_time() - start_time)
 
                         """
                         # DEBUG
@@ -353,20 +356,74 @@ def generateFlows(grid):
 
         tries += 1
 
-    """
-    # DEBUG
-    if len(grid.unoccupied) == 0:
-        num_gdmp = len(gdmp_calls)
-        num_gec = len(gec_calls)
-
-        av_gdmp = sum(gdmp_calls) / num_gdmp
-        av_gec = sum(gec_calls) / num_gec
-
-        print(str(num_gdmp) + " gdmp calls; average = " + str(av_gdmp))
-        print(str(num_gec) + " gec calls; average = " + str(av_gec))
-    """
-
     return final_paths
+
+def simplify(grid, path1, path2):
+    """
+    determine whether the two paths in the grid can be properly combined, and if
+    so combine them
+
+    @param  grid    :   grid the paths are contained in
+    @param  path1   :   first path we want to combine
+    @param  path2   :   second path we want to combine
+
+    @return         :   a combined path, or None if none were possible
+    """
+
+    # count how many times the paths are adjacent to each other
+    pathSum = sum([ grid.pathDegree(cell, path2) for cell in path1 ])
+
+    # if the paths are only adjacent once, check if the adjacent cells are
+    # both endpoints; if so return the combined path
+    if pathSum == 1:
+        if direction.isAdjacent(path1[0], path2[0]):
+            return path2[::-1] + path1
+        if direction.isAdjacent(path1[0], path2[-1]):
+            return path2 + path1
+        if direction.isAdjacent(path1[-1], path2[0]):
+            return path1 + path2
+        if direction.isAdjacent(path1[-1], path2[-1]):
+            return path2 + path1[::-1]
+
+    return None
+
+def simplifyPaths(grid, paths):
+    """
+    combine paths to minimize the overall number of paths in the grid
+
+    @param  grid    :   grid the paths are contained in
+    @param  paths   :   list of paths to simplify
+
+    @return         :   reduced list of viable paths
+    """
+
+    # sort the paths by length so shorter paths are combined first
+    simplified = sorted(paths, key = lambda p : len(p))
+
+    # combine paths as many paths as possible
+    while True:
+        # iterate through pairs of paths until we find one that can be combined
+        for path1 in simplified:
+            for path2 in simplified:
+                if not path1[0] == path2[0]:
+                    combined = simplify(grid, path1, path2)
+
+                    # if we can combine these paths, remove them from the list of
+                    # reduced paths
+                    if not combined == None:
+                        simplified.remove(path1)
+                        simplified.remove(path2)
+                        break
+            if not combined == None:
+                break
+
+        # add this combined path to the list of reduced paths
+        if not combined == None:
+            simplified.append(combined)
+        else:
+            break
+
+    return simplified
 
 def randomStep(grid, path, last_direction=None, flow_index=None):
     """

@@ -41,7 +41,15 @@ grid = Grid(    GRID_ORIGIN,
                 (179, 179, 179),
                 thickness = 5.0,    )
 
-paths = generator.generateFlows(grid)
+attempts = 0
+while len(grid.unoccupied) > 0:
+    grid.clearValues()
+    paths = generator.generateFlows(grid)
+    attempts += 1
+
+print("Generated paths after " + str(attempts) + " attempt(s)")
+
+paths = generator.simplifyPaths(grid, paths)
 
 # make sure all cells in the list of paths are unique
 flatten = lambda multi : [x for arr in multi for x in arr]

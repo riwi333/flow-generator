@@ -38,21 +38,20 @@ grids = [   Grid(   [0, 0],
 
 generate_times, simplify_times, initial_length, final_length = [], [], [], []
 for i in range(MAX_SIZE - MIN_SIZE + 1):
-    g_time, s_time, init, final = 0, 0, 0, 0
+    g_time, s_time, init, final = float(0), float(0), float(0), float(0)
     for j in range(NUM_TESTS):
         # get a list of successfully generated paths
         g_t = None
         while len(grids[i].unoccupied) > 0:
-            g_t = process_time()
             grids[i].clearValues()
-            paths = generator.generateFlows(grids[i])
-            g_t = process_time() - g_time
+            g_t = process_time()
+            paths = generator.generatePaths(grids[i])
+            g_t = process_time() - g_t
 
         # keep track of how long the succesful generation process took
         g_time += g_t
 
-        # measure the runtime of path simplification and the initial and final
-        # number of paths in the grid
+        # measure the runtime of path simplification and the initial and final number of paths in the grid
         init += len(paths)
         start_time = process_time()
         paths = generator.simplifyPaths(grids[i], paths)
@@ -71,10 +70,10 @@ print("{:15s}{:27s}{:27s}{:27s}{:27s}".format("Grid size", "Generation time", "S
 
 # print out all the collected information
 for i in range(MAX_SIZE - MIN_SIZE + 1):
-    generate_times[i] = float(generate_times[i]) / NUM_TESTS
-    simplify_times[i] = float(simplify_times[i]) / NUM_TESTS
-    initial_length[i] = float(initial_length[i]) / NUM_TESTS
-    final_length[i] = float(final_length[i]) / NUM_TESTS
+    generate_times[i] = generate_times[i] / NUM_TESTS
+    simplify_times[i] = simplify_times[i] / NUM_TESTS
+    initial_length[i] = initial_length[i] / NUM_TESTS
+    final_length[i] = final_length[i] / NUM_TESTS
 
     size_string = str(i + MIN_SIZE) + "x" + str(i + MIN_SIZE)
     print("{:<15s}{:<27.3f}{:<27.3f}{:<27.3f}{:<27.3f}".format(size_string, generate_times[i], simplify_times[i], initial_length[i], final_length[i]))

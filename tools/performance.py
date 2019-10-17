@@ -35,33 +35,48 @@ grids = [   Grid(   [0, 0],
                     (0, 0, 0)   )
             for size in range(MIN_SIZE, MAX_SIZE + 1)   ]
 
-success_rates, times = [], []
+success_rates, success_times, fail_times = [], [], []
 for i in range(MAX_SIZE - MIN_SIZE + 1):
-    success, runtime = 0, float(0)
+    success, s_time, f_time = float(0), float(0), float(0)
     for j in range(NUM_TESTS):
         # run the flow generation algorithm and measure its runtime
-        initial_time = process_time()
-        paths = generator.generateFlows(grids[i])
-        runtime += process_time() - initial_time
+        time = process_time()
+        paths = generator.generatePaths(grids[i])
+        time = process_time() - time
 
-        # if there are no more empty cells in the grid, generateFlows() succeeded
+        # if there are no more empty cells in the grid, generatePaths() succeeded
         if len(grids[i].unoccupied) == 0:
             success += 1
+            s_time += time
+        else:
+            f_time += time
 
         # clear all the marked values in the grid to reset it for the next test
         grids[i].clearValues()
 
     success_rates.append(success)
-    times.append(runtime)
+    success_times.append(s_time)
+    fail_times.append(f_time)
 
-print("{:15s}{:18s}{:15s}".format("Grid size", "Success rate", "Average runtime"))
+print("{:15s}{:18s}{:22s}{:22s}".format("Grid size", "Success rate", "Successful runtime", "Failed runtime"))
 
 # print out all the collected information
 for i in range(MAX_SIZE - MIN_SIZE + 1):
-    success_rates[i] = float(success_rates[i]) / NUM_TESTS
-    times[i] = times[i] / NUM_TESTS
+    if success_rates[i] == 0:
+        success_times[i] = float('nan')
+        fail_times[i] = fail_times[i] / NUM_TESTS
+
+    elif success_rates[i] == NUM_TESTS:
+        success_times[i] = success_times[i] / NUM_TESTS
+        fail_times[i] = float('nan')
+
+    else:
+        success_times[i] = success_times[i] / success_rates[i]
+        fail_times[i] = fail_times[i] / (NUM_TESTS - success_rates[i])
+
+    success_rates[i] = success_rates[i] / NUM_TESTS
 
     size_string = str(i + MIN_SIZE) + "x" + str(i + MIN_SIZE)
-    print("{:<15s}{:<18.3f}{:<15.3f}".format(size_string, success_rates[i], times[i]))
+    print("{:<15s}{:<18.3f}{:<22.3f}{:<22.3f}".format(size_string, success_rates[i], success_times[i], fail_times[i]))
 
 print("\nPerformed " + str(NUM_TESTS) + " tests per size")

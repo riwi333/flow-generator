@@ -1,0 +1,25 @@
+Commit ID: 6d6d7dc2e927484a9ce61058237086f660baa86f
+Commit branch: only-sample-paths
+"updated performance script naming conventions and fixed time measurement bug"
+10/17/2019 17:28:31
+
+Grid size      Success rate      Successful runtime    Failed runtime        
+4x4            1.000             0.001                 nan                   
+5x5            0.967             0.002                 0.064                 
+6x6            0.967             0.003                 0.089                 
+7x7            0.967             0.006                 0.106                 
+8x8            1.000             0.009                 nan                   
+9x9            1.000             0.014                 nan                   
+10x10          0.967             0.019                 0.117                 
+11x11          0.967             0.029                 0.110                 
+12x12          1.000             0.041                 nan                   
+13x13          1.000             0.052                 nan                   
+14x14          0.933             0.073                 0.139                 
+15x15          1.000             0.094                 nan                   
+16x16          0.933             0.117                 0.213                 
+17x17          0.967             0.149                 0.270                 
+18x18          0.867             0.199                 0.273                 
+19x19          0.967             0.233                 0.418                 
+20x20          0.900             0.286                 0.365                 
+
+Performed 30 tests per size

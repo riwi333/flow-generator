@@ -44,7 +44,7 @@ grid = Grid(    GRID_ORIGIN,
 attempts = 0
 while len(grid.unoccupied) > 0:
     grid.clearValues()
-    paths = generator.generateFlows(grid)
+    paths = generator.generatePaths(grid)
     attempts += 1
 
 print("Generated paths after " + str(attempts) + " attempt(s)")

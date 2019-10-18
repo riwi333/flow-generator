@@ -8,12 +8,11 @@ import direction
 functions for handling path generation
 
 TODO:
-    -   randomize initial path and choice of source cell, making sure that degree(source)
-        is still minimzed
-
-    -   remove 'tries' variable and its conditions
-
     -   more unit tests!
+
+    -   generate the first path as a random walk instead of a degree-minimized path;
+        may possibly reduce success rate (which is currently almost always above 90%),
+        but is likely to greatly increase uniqueness of paths
 
     -   figure out conditions to allow components of size 4 and 5 (not all components of
         those sizes will make illegal paths, but right now the algorithm throws them out
@@ -146,19 +145,18 @@ def generatePaths(grid):
 
     @param  grid    :   grid the paths will be placed in
 
-    @return         :   list containing all viable paths used to fill the grid
+    @return         :   list containing all viable paths used to fill the grid,
+                        or None if the grid could not be filled
     """
 
     # TODO: make the first flow path a random walk instead of being calculated
 
     final_paths, index = [], 0
 
-    tries = 0
-
     # seed the random generator
     seed(datetime.now())
 
-    while len(grid.unoccupied) > 0 and tries < 100:
+    while len(grid.unoccupied) > 0:
         # sort the empty cells in order of ascending degree, and keep track of ones we've tried already
         sorted_unoccupied = sorted(grid.unoccupied, key = lambda cell : grid.degree(cell))
         attempted = { source : False for source in sorted_unoccupied }
@@ -171,7 +169,7 @@ def generatePaths(grid):
 
         # choose a cell to start this path with
         attempts = 0
-        while attempts < len(grid.unoccupied):
+        while True:
             # randomly pick an empty cell of lowest degree that we haven't tried yet (the "source" of this path)
             source_choices, source_degree, source = [], 1, None
             for i in range(len(sorted_unoccupied) + 1):
@@ -181,6 +179,7 @@ def generatePaths(grid):
                     if len(source_choices) > 0:
                         source = choices(source_choices)[0]
                         attempted[source] = True
+                        attempts += 1
                         break
 
                     # if there are no potential choices (no cells with our current minimum degree), increment the
@@ -350,16 +349,16 @@ def generatePaths(grid):
                 index += 1
                 break
 
-            # if none of the paths were legal, try a new source cell
             else:
-                attempts += 1
+                # if we've tried to use all the unoccupied cells as sources and none
+                # worked, this generation has failed
+                if attempts == len(grid.unoccupied):
+                    return None
 
             """
             # DEBUG
             print("\n")
             """
-
-        tries += 1
 
     return final_paths
 

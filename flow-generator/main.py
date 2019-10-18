@@ -55,8 +55,8 @@ grid = Grid(    GRID_ORIGIN,
                 (179, 179, 179),
                 thickness = 5.0,    )
 
-attempts = 0
-while len(grid.unoccupied) > 0:
+attempts, paths = 0, None
+while paths == None:
     grid.clearValues()
     paths = generator.generatePaths(grid)
     attempts += 1

@@ -10,10 +10,6 @@ functions for handling path generation
 TODO:
     -   randomize the length of getRandomPath() paths
 
-    -   write unit test for getRandomPath() to make sure output is always legal;
-        should be easy since only parameter can be randomized; use ddt to automate
-        unit tests on 100s of paths
-
     -   measure performance/success rate using getRandomPath() for the initial path
 
     -   come up with a better explanation for the getRandomPath() heuristics
@@ -60,20 +56,29 @@ def getRandomPath(grid, source):
             if grid.inBounds(next_cell) and grid.isEmpty(next_cell):
                 # use the following heuristics to make legal paths without having to do BFS checks:
                 #   1)  no cell in the path (except perhaps the source) can be adjacent to a wall of the grid
-                if next_cell[0] == 0 or next_cell[1] == grid.cols - 1 or next_cell[1] == 0 or next_cell[1] == grid.rows - 1:
+                #       (this is equivalent to requiring any cell has a degree of 3 before being added)
+                if grid.degree(next_cell) < 3:
                     continue
 
                 #   2)  any added cell should not be adjacent to any other cell in path "in front" of it,
                 #       relative to the cell before it; ex. if an added cell is "east" (E) of the
                 #       cell before it, there shouldn't be any cells from the path E, N, S, NE, or SE of the
                 #       added cell
-                if direction.adjacentDirection(path[-1], next_cell) in [ direction.LEFT_DIRECTION, direction.RIGHT_DIRECTION ]:
-                    diagonal_cell1 = ( next_cell[0], next_cell[1] + 1 )
-                    diagonal_cell2 = ( next_cell[0], next_cell[1] - 1 )
+                if direction.adjacentDirection(path[-1], next_cell) == direction.LEFT_DIRECTION:
+                    diagonal_cell1 = ( next_cell[0] - 1, next_cell[1] + 1 )
+                    diagonal_cell2 = ( next_cell[0] - 1, next_cell[1] - 1 )
 
-                elif direction.adjacentDirection(path[-1], next_cell) in [ direction.UP_DIRECTION, direction.DOWN_DIRECTION ]:
-                    diagonal_cell1 = ( next_cell[0] + 1, next_cell[1] )
-                    diagonal_cell2 = ( next_cell[0] - 1, next_cell[1] )
+                elif direction.adjacentDirection(path[-1], next_cell) == direction.RIGHT_DIRECTION:
+                    diagonal_cell1 = ( next_cell[0] + 1, next_cell[1] + 1 )
+                    diagonal_cell2 = ( next_cell[0] + 1, next_cell[1] - 1 )
+
+                elif direction.adjacentDirection(path[-1], next_cell) == direction.DOWN_DIRECTION:
+                    diagonal_cell1 = ( next_cell[0] + 1, next_cell[1] - 1)
+                    diagonal_cell2 = ( next_cell[0] - 1, next_cell[1] - 1)
+
+                elif direction.adjacentDirection(path[-1], next_cell) == direction.UP_DIRECTION:
+                    diagonal_cell1 = ( next_cell[0] + 1, next_cell[1] + 1)
+                    diagonal_cell2 = ( next_cell[0] - 1, next_cell[1] + 1)
 
                 # note that the diagonal cells must be within the grid if the added cell is not adjacent to a wall
                 if not grid.isEmpty(diagonal_cell1) or not grid.isEmpty(diagonal_cell2):
@@ -91,8 +96,6 @@ def getRandomPath(grid, source):
         # decide whether to try add another cell or not, based on how long the path currently is
         if len(path) > min([ grid.rows, grid.cols ]):
             extendPath = False
-
-    assert len(path) >= 3, "Randomly-generated path " + str(path) + " is too short"
 
     # reset the grid in case this path is unused
     grid.clearValues()

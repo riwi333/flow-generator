@@ -62,27 +62,24 @@ print("{:15s}{:18s}{:22s}{:22s}{:22s}".format("Grid size", "Success rate", "Succ
 
 # print out all the collected information
 for i in range(MAX_SIZE - MIN_SIZE + 1):
+    # NOTE: the expected runtime is calculated using the success rate as the parameter
+    # of a geometric random variable
     if success_rates[i] == 0:
         success_times[i] = float('nan')
         fail_times[i] = fail_times[i] / NUM_TESTS
+        expected_times.append(float('nan'))
 
     elif success_rates[i] == NUM_TESTS:
         success_times[i] = success_times[i] / NUM_TESTS
         fail_times[i] = float('nan')
+        expected_times.append(success_times[i])
 
     else:
         success_times[i] = success_times[i] / success_rates[i]
         fail_times[i] = fail_times[i] / (NUM_TESTS - success_rates[i])
+        expected_times.append(success_times[i] + fail_times[i] / success_rates[i])
 
     success_rates[i] = success_rates[i] / NUM_TESTS
-
-    # calculate the expected runtime using the success rate as the parameter
-    # of a geometric random variable
-    if success_rates[i] == 0:
-        expected_times.append(float('nan'))
-    else:
-        expected = success_times[i] + fail_times[i] / success_rates[i]
-        expected_times.append(expected)
 
     size_string = str(i + MIN_SIZE) + "x" + str(i + MIN_SIZE)
     print("{:<15s}{:<18.3f}{:<22.3f}{:<22.3f}{:<22.3f}".format(size_string, success_rates[i], success_times[i], fail_times[i], expected_times[i]))

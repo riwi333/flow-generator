@@ -173,42 +173,38 @@ def getComponents(grid, empty=None):
     """
 
     if empty is None:
-        unoccupied = list(grid.unoccupied)
+        unvisited = set(list(grid.unoccupied))
     else:
-        unoccupied = list(empty)
+        unvisited = set(list(empty))
 
-    assert len(unoccupied) > 0
+    assert len(unvisited) > 0
 
-    # initialize the queue and visited dictionary
-    visited, queue, components = { cell : False for cell in unoccupied }, [], []
+    # initialize the queue and component list
+    queue, components = [], []
 
     # push some unoccupied cell into the queue
-    queue.append(unoccupied.pop())
+    queue.append(unvisited.pop())
     components.append([])
 
     while len(queue) > 0:
         # find all the cells in this current component
         while len(queue) > 0:
             # pop the first element out of the queue and add it to this component
-            cell, visited[cell] = queue.pop(0), True
+            cell = queue.pop(0)
             components[-1].append(cell)
 
             # add neighbors of the popped cell that have not been visited to the queue
             for dir in direction.directions:
                 neighbor = direction.next[dir](*cell)
-                if grid.inBounds(neighbor) and neighbor in unoccupied:
-                    visited[neighbor] = True
+                if grid.inBounds(neighbor) and neighbor in unvisited:
                     queue.append(neighbor)
-                    unoccupied.remove(neighbor)
+                    unvisited.remove(neighbor)
 
-        # determine if there are any remaining unvisited cells; if so, put the first
-        # one we find into a new component
-        for cell in visited.keys():
-            if visited[cell] == False:
-                queue.append(cell)
-                visited[cell] = True
-                components.append([])
-                break
+        # determine if there are any remaining unvisited cells; if so, put a random
+        # one into a new component
+        if len(unvisited) > 0:
+            queue.append(unvisited.pop())
+            components.append([])
 
         # if we reach this point and the queue is still empty, there are
         # no more unvisited empty cells, so we've found all the components
@@ -225,29 +221,10 @@ def generatePaths(grid):
                         or None if the grid could not be filled
     """
 
-    # TODO: make the first flow path a random walk instead of being calculated
-
     final_paths, index = [], 0
 
     # seed the random generator
     seed(datetime.now())
-
-    """
-    # make the first path a random walk
-    potential_sources = grid.getAllCellCoordinates()
-    potential_sources.remove((0, 0))
-    potential_sources.remove((0, grid.rows - 1))
-    potential_sources.remove((grid.cols - 1, 0))
-    potential_sources.remove((grid.cols - 1, grid.rows - 1))
-    source = choices(potential_sources)[0]
-    random_path = getRandomPath(grid, source)
-    final_paths.append(random_path)
-
-    for cell in random_path:
-        grid.setCell(cell, index)
-
-    index += 1
-    """
 
     while len(grid.unoccupied) > 0:
         # sort the empty cells in order of ascending degree, and keep track of ones we've tried already

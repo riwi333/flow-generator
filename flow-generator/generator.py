@@ -8,8 +8,6 @@ import direction
 functions for handling path generation
 
 TODO:
-    -   randomize the length of getRandomPath() paths
-
     -   measure performance/success rate using getRandomPath() for the initial path
 
     -   come up with a better explanation for the getRandomPath() heuristics
@@ -44,6 +42,10 @@ def getRandomPath(grid, source):
 
     extendPath, path, dirs = True, [ source ], list(direction.directions)
     grid.setCell(source, 0)
+
+    # randomize the maximum number of cells this path will contain
+    min_dim = min([ grid.rows, grid.cols ]) - 3
+    goal_length = 3 + choices([ min_dim - x for x in range(-2, 3)])[0]
 
     while extendPath == True:
         # randomize the directions we check for an adequate cell to add to the path
@@ -94,7 +96,7 @@ def getRandomPath(grid, source):
                 extendPath = True
 
         # decide whether to try add another cell or not, based on how long the path currently is
-        if len(path) > min([ grid.rows, grid.cols ]):
+        if len(path) == goal_length:
             extendPath = False
 
     # reset the grid in case this path is unused
@@ -229,6 +231,23 @@ def generatePaths(grid):
 
     # seed the random generator
     seed(datetime.now())
+
+    """
+    # make the first path a random walk
+    potential_sources = grid.getAllCellCoordinates()
+    potential_sources.remove((0, 0))
+    potential_sources.remove((0, grid.rows - 1))
+    potential_sources.remove((grid.cols - 1, 0))
+    potential_sources.remove((grid.cols - 1, grid.rows - 1))
+    source = choices(potential_sources)[0]
+    random_path = getRandomPath(grid, source)
+    final_paths.append(random_path)
+
+    for cell in random_path:
+        grid.setCell(cell, index)
+
+    index += 1
+    """
 
     while len(grid.unoccupied) > 0:
         # sort the empty cells in order of ascending degree, and keep track of ones we've tried already

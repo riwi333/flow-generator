@@ -15,6 +15,8 @@ TODO:
     -   (eventually) add option to play puzzle with controls similar to 'tools/selfdraw.py'
 
     -   prevent darker/less-visible colors from being used, and don't repeat any colors
+        (easy way to do this is to choose a permanent set of 30ish colors, and have each
+        flow use one of the colors in the set w/o replacement)
 
     -   randomize grid dimension size if no arguments are given
 

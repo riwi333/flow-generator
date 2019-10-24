@@ -44,12 +44,12 @@ for i in range(MAX_SIZE - MIN_SIZE + 1):
         paths = generator.generatePaths(grids[i])
         time = process_time() - time
 
-        # if there are no more empty cells in the grid, generatePaths() succeeded
-        if len(grids[i].unoccupied) == 0:
+        # check if generatePaths() succeeded (if not, it returns a None object)
+        if paths == None:
+            f_time += time
+        else:
             success += 1
             s_time += time
-        else:
-            f_time += time
 
         # clear all the marked values in the grid to reset it for the next test
         grids[i].clearValues()

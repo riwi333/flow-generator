@@ -41,8 +41,8 @@ for i in range(MAX_SIZE - MIN_SIZE + 1):
     g_time, s_time, init, final = float(0), float(0), float(0), float(0)
     for j in range(NUM_TESTS):
         # get a list of successfully generated paths
-        g_t = None
-        while len(grids[i].unoccupied) > 0:
+        g_t, paths = None, None
+        while paths == None:
             grids[i].clearValues()
             g_t = process_time()
             paths = generator.generatePaths(grids[i])

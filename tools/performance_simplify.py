@@ -66,7 +66,7 @@ for i in range(MAX_SIZE - MIN_SIZE + 1):
     initial_length.append(init)
     final_length.append(final)
 
-print("{:15s}{:27s}{:27s}{:27s}{:27s}".format("Grid size", "Generation time", "Simplification time", "Initial # paths", "Final # paths"))
+print("{:15s}{:33s}{:27s}{:27s}{:27s}".format("Grid size", "Successful generation time", "Simplification time", "Initial # paths", "Final # paths"))
 
 # print out all the collected information
 for i in range(MAX_SIZE - MIN_SIZE + 1):
@@ -76,6 +76,6 @@ for i in range(MAX_SIZE - MIN_SIZE + 1):
     final_length[i] = final_length[i] / NUM_TESTS
 
     size_string = str(i + MIN_SIZE) + "x" + str(i + MIN_SIZE)
-    print("{:<15s}{:<27.3f}{:<27.3f}{:<27.3f}{:<27.3f}".format(size_string, generate_times[i], simplify_times[i], initial_length[i], final_length[i]))
+    print("{:<15s}{:<33.3f}{:<27.3f}{:<27.3f}{:<27.3f}".format(size_string, generate_times[i], simplify_times[i], initial_length[i], final_length[i]))
 
 print("\nPerformed " + str(NUM_TESTS) + " tests per size")

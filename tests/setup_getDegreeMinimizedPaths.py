@@ -6,10 +6,10 @@ helper functions for getDegreeMinimizedPaths() test cases
 
 FAILURE_MESSAGE = "Incorrect path generated"
 
-def getGrid(rows, cols):
+def getGrid(rows, cols, origin=[0.0, 0.0], width=0.0, height=0.0):
     """
-    create a grid with the given number of columns/rows; the grid is not
-    meant to be actually drawn, so we neglect attributes like position,
+    create a grid with the given number of columns/rows; the grid is (likely) not
+    actually meant to be drawn, so we can neglect attributes like position,
     color, and line thickness
 
     @param  rows    :   desired number of rows in the grid
@@ -20,7 +20,7 @@ def getGrid(rows, cols):
 
     assert rows * cols > 0, "Either the desired number of rows or columns was 0"
 
-    return Grid([0, 0], 0, 0, rows = rows, cols = cols)
+    return Grid(origin, width, height, rows = rows, cols = cols)
 
 def getPathsFromParents(source, parents):
     """

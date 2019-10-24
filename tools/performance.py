@@ -8,7 +8,7 @@ measure the success rates and average runtime of flow generation for various gri
 
 MIN_SIZE = 4        # minimum grid size to generate flows for
 MAX_SIZE = 20       # maximum grid size to generate flows for
-NUM_TESTS = 30      # number of flow generations to do per grid size
+NUM_TESTS = 50      # number of flow generations to do per grid size
 
 # include current git master branch commit information to help track performance progress
 current_repo = git.Repo(search_parent_directories=True)

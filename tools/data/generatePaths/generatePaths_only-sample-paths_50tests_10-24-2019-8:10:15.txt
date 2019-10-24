@@ -1,0 +1,25 @@
+Commit ID: 8b487783ee226477940d27e8239e89695bdf6d2b
+Commit branch: only-sample-paths
+"fixed correctness bug in getComponents() and fixed expected time 'nan' conditions in performance script"
+10/24/2019 8:10:15
+
+Grid size      Success rate      Successful runtime    Failed runtime        Expected runtime      
+4x4            1.000             0.001                 nan                   0.001                 
+5x5            0.960             0.002                 0.003                 0.002                 
+6x6            1.000             0.003                 nan                   0.003                 
+7x7            0.940             0.006                 0.006                 0.006                 
+8x8            0.960             0.010                 0.011                 0.010                 
+9x9            1.000             0.014                 nan                   0.014                 
+10x10          0.900             0.020                 0.023                 0.021                 
+11x11          0.940             0.029                 0.028                 0.030                 
+12x12          0.940             0.040                 0.048                 0.041                 
+13x13          0.940             0.055                 0.056                 0.056                 
+14x14          0.920             0.072                 0.078                 0.074                 
+15x15          0.920             0.098                 0.113                 0.100                 
+16x16          0.940             0.135                 0.144                 0.138                 
+17x17          0.880             0.173                 0.206                 0.178                 
+18x18          0.900             0.242                 0.276                 0.248                 
+19x19          0.960             0.325                 0.342                 0.332                 
+20x20          0.800             0.392                 0.435                 0.403                 
+
+Performed 50 tests per size

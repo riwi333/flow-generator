@@ -1,18 +1,22 @@
 from grid import Grid
 from random import random, shuffle, seed, choices
 from datetime import datetime
-from math import floor, ceil
+from math import floor
 import direction
 
 """
 functions for handling path generation
 
 TODO:
-    -   more unit tests!
+    -   randomize the length of getRandomPath() paths
 
-    -   generate the first path as a random walk instead of a degree-minimized path;
-        may possibly reduce success rate (which is currently almost always above 90%),
-        but is likely to greatly increase uniqueness of paths
+    -   write unit test for getRandomPath() to make sure output is always legal;
+        should be easy since only parameter can be randomized; use ddt to automate
+        unit tests on 100s of paths
+
+    -   measure performance/success rate using getRandomPath() for the initial path
+
+    -   come up with a better explanation for the getRandomPath() heuristics
 
     -   figure out conditions to allow components of size 4 and 5 (not all components of
         those sizes will make illegal paths, but right now the algorithm throws them out
@@ -28,6 +32,72 @@ TODO:
     -   try to implement Dial's algorithm again?
 
 """
+
+def getRandomPath(grid, source):
+    """
+    generate a randomized path on an empty grid with a given source
+
+    @param  grid    :   grid the randomized path is contained in (must be empty)
+    @param  source  :   source cell of the randomized path (cannot be a corner cell)
+
+    @return         :   a legal, randomized path starting with the given source cell
+    """
+
+    assert grid.unoccupied == set(grid.getAllCellCoordinates()), "Passed grid has occupied cells"
+    assert grid.degree(source) > 2, "Passed source cell lies in corner of grid"
+
+    extendPath, path, dirs = True, [ source ], list(direction.directions)
+    grid.setCell(source, 0)
+
+    while extendPath == True:
+        # randomize the directions we check for an adequate cell to add to the path
+        shuffle(dirs)
+
+        extendPath = False
+
+        for dir in dirs:
+            next_cell = direction.next[dir](*path[-1])
+            if grid.inBounds(next_cell) and grid.isEmpty(next_cell):
+                # use the following heuristics to make legal paths without having to do BFS checks:
+                #   1)  no cell in the path (except perhaps the source) can be adjacent to a wall of the grid
+                if next_cell[0] == 0 or next_cell[1] == grid.cols - 1 or next_cell[1] == 0 or next_cell[1] == grid.rows - 1:
+                    continue
+
+                #   2)  any added cell should not be adjacent to any other cell in path "in front" of it,
+                #       relative to the cell before it; ex. if an added cell is "east" (E) of the
+                #       cell before it, there shouldn't be any cells from the path E, N, S, NE, or SE of the
+                #       added cell
+                if direction.adjacentDirection(path[-1], next_cell) in [ direction.LEFT_DIRECTION, direction.RIGHT_DIRECTION ]:
+                    diagonal_cell1 = ( next_cell[0], next_cell[1] + 1 )
+                    diagonal_cell2 = ( next_cell[0], next_cell[1] - 1 )
+
+                elif direction.adjacentDirection(path[-1], next_cell) in [ direction.UP_DIRECTION, direction.DOWN_DIRECTION ]:
+                    diagonal_cell1 = ( next_cell[0] + 1, next_cell[1] )
+                    diagonal_cell2 = ( next_cell[0] - 1, next_cell[1] )
+
+                # note that the diagonal cells must be within the grid if the added cell is not adjacent to a wall
+                if not grid.isEmpty(diagonal_cell1) or not grid.isEmpty(diagonal_cell2):
+                    continue
+
+                # these heuristics reduce the number of legal paths that can be generated, but *probably* leads
+                # to a faster implementation; this is partly pre-optimization, but also aesthetic, since a
+                # previous implementation that just made completely random paths had some very unnatural-looking
+                # results
+
+                path.append(next_cell)
+                grid.setCell(next_cell, 0)
+                extendPath = True
+
+        # decide whether to try add another cell or not, based on how long the path currently is
+        if len(path) > min([ grid.rows, grid.cols ]):
+            extendPath = False
+
+    assert len(path) >= 3, "Randomly-generated path " + str(path) + " is too short"
+
+    # reset the grid in case this path is unused
+    grid.clearValues()
+
+    return path
 
 def getDegreeMinimizedPaths(grid, source):
     """
@@ -360,6 +430,10 @@ def generatePaths(grid):
             print("\n")
             """
 
+    # clear the assignments of grid cells to path indices in case we the generated paths
+    # are edited before being placed on the grid
+    grid.clearValues()
+
     return final_paths
 
 def simplify(grid, path1, path2):
@@ -407,6 +481,7 @@ def simplifyPaths(grid, paths):
     # combine paths as many paths as possible
     while True:
         # iterate through pairs of paths until we find one that can be combined
+        combined = None
         for path1 in simplified:
             for path2 in simplified:
                 if not path1[0] == path2[0]:

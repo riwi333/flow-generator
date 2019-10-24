@@ -177,8 +177,8 @@ def getEmptyComponents(grid, empty=None):
     # initialize the queue and visited dictionary
     visited, queue, components = { cell : False for cell in unoccupied }, [], []
 
-    # push the source cell of the first component into the queue
-    queue.append(unoccupied[0])
+    # push some unoccupied cell into the queue
+    queue.append(unoccupied.pop())
     components.append([])
 
     while len(queue) > 0:
@@ -191,9 +191,10 @@ def getEmptyComponents(grid, empty=None):
             # add neighbors of the popped cell that have not been visited to the queue
             for dir in direction.directions:
                 neighbor = direction.next[dir](*cell)
-                if grid.inBounds(neighbor) and grid.isEmpty(neighbor) and visited[neighbor] == False:
+                if grid.inBounds(neighbor) and neighbor in unoccupied:
                     visited[neighbor] = True
                     queue.append(neighbor)
+                    unoccupied.remove(neighbor)
 
         # determine if there are any remaining unvisited cells; if so, put the first
         # one we find into a new component
@@ -359,10 +360,8 @@ def generatePaths(grid):
 
                         # temporarily mark the cells in this path as occupied so we can find the resulting unoccupied components
                         test_empty.remove(source)
-                        grid.setCell(source, index)
                         for cell in minimized_paths[sink]:
                             test_empty.remove(cell)
-                            grid.setCell(cell, index)
 
                         # get the unoccupied components that would be made by this path
                         components = getEmptyComponents(grid, empty=test_empty)
@@ -381,13 +380,6 @@ def generatePaths(grid):
                             if not (component_size == 0 or component_size == 3 or component_size >= 6):
                                 satisfied = False
                                 break
-
-                        # unmark the cells of this path as occupied in the grid
-                        grid.resetCell(source)
-                        for cell in minimized_paths[sink]:
-                            grid.resetCell(cell)
-
-                            assert grid.isEmpty(cell)
 
                     # if all the resulting components are legal, use this as the next path
                     if satisfied:

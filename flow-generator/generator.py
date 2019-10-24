@@ -156,7 +156,7 @@ def getDegreeMinimizedPaths(grid, source):
 
     return parents
 
-def getEmptyComponents(grid, empty=None):
+def getComponents(grid, empty=None):
     """
     perform a BFS to identify the connected components of empty cells in the grid
 
@@ -364,7 +364,7 @@ def generatePaths(grid):
                             test_empty.remove(cell)
 
                         # get the unoccupied components that would be made by this path
-                        components = getEmptyComponents(grid, empty=test_empty)
+                        components = getComponents(grid, empty=test_empty)
 
                         """
                         # DEBUG

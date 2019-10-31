@@ -4,16 +4,20 @@ from datetime import datetime
 from math import floor
 import direction
 
+INIT_RANDOM_CUTOFF = 12
+
 """
 functions for handling path generation
 
 TODO:
-    -   measure performance/success rate using getRandomPath() for the initial path
+    -   make the process of combining paths probabilistic; we want about min(rows, cols)
+        flows per grid, so the chance of choosing to combine two paths should decrease
+        as the number of flows gets closer (or below) that goal
 
     -   come up with a better explanation for the getRandomPath() heuristics
 
-    -   figure out conditions to allow components of size 4 and 5 (not all components of
-        those sizes will make illegal paths, but right now the algorithm throws them out
+    -   test blocks of size 4 and 5 for legality (those size blocks are legal iff
+        they have *exactly* 2 cells of degree 1)
 
     -   find a way to measure the "uniqueness" of a given set of paths; the algorithm
         should be able to generate several sets that are decently different from each other
@@ -27,17 +31,29 @@ TODO:
 
 """
 
-def getRandomPath(grid, source):
+def getRandomPath(grid, source=None):
     """
     generate a randomized path on an empty grid with a given source
 
-    @param  grid    :   grid the randomized path is contained in (must be empty)
-    @param  source  :   source cell of the randomized path (cannot be a corner cell)
+    @param      grid    :   grid the randomized path is contained in (must be empty)
+    @optional   source  :   source cell of the randomized path (cannot be a corner cell)
 
-    @return         :   a legal, randomized path starting with the given source cell
+    @return             :   a legal, randomized path starting with the given source cell
     """
 
     assert grid.unoccupied == set(grid.getAllCellCoordinates()), "Passed grid has occupied cells"
+
+    # if no source cell is provided, choose a random unoccupied cell to use
+    if source is None:
+        # generate a set of all possible get coordinates and remove the corners
+        allCoords = set(grid.getAllCellCoordinates())
+        allCoords.remove((0, 0))
+        allCoords.remove((0, grid.rows - 1))
+        allCoords.remove((grid.cols - 1, 0))
+        allCoords.remove((grid.cols - 1, grid.rows - 1))
+
+        source = allCoords.pop()
+
     assert grid.degree(source) > 2, "Passed source cell lies in corner of grid"
 
     extendPath, path, dirs = True, [ source ], list(direction.directions)
@@ -225,6 +241,16 @@ def generatePaths(grid):
 
     # seed the random generator
     seed(datetime.now())
+
+    # if the size of the grid is below a certain cutoff, randomize the initial path
+    if min([grid.cols, grid.rows]) < INIT_RANDOM_CUTOFF:
+        randomPath = getRandomPath(grid)
+
+        for cell in randomPath:
+            grid.setCell(cell, index)
+
+        final_paths.append(randomPath)
+        index += 1
 
     while len(grid.unoccupied) > 0:
         # sort the empty cells in order of ascending degree, and keep track of ones we've tried already

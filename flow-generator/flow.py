@@ -88,7 +88,6 @@ class Flow:
             self.grid.resetCell(cell)
 
             return cell
-
         else:
             return None
 
@@ -100,16 +99,18 @@ class Flow:
 
         if not self.endpointCircles[0] == None:
             self.endpointCircles[0].delete()
+            self.endpointCircles[0] = None
 
         if not self.endpointCircles[1] == None:
             self.endpointCircles[1].delete()
+            self.endpointCircles[1] = None
 
         for i in range(len(self.pathLines) - 1):
             self.pathLines[i].delete()
 
     def updateGraphics(self):
         """
-        draw all graphics for the flow's endpoints and path cells and them to
+        draw all graphics for the flow's endpoints and path cells and add them to
         the flow's graphics batch
 
         """
@@ -121,7 +122,7 @@ class Flow:
         if len(self.path) > 0:
             self.endpointCircles[0] = graphics.generateCircle(  self.grid.getCellCenter(self.path[0]),
                                                                 0.3 * min(*self.grid.getSpacing()),
-                                                                15,
+                                                                5,#15,
                                                                 fill = True,
                                                                 batch = self.flowBatch,
                                                                 color = self.color  )
@@ -129,7 +130,7 @@ class Flow:
         if len(self.path) > 1:
             self.endpointCircles[1] = graphics.generateCircle(  self.grid.getCellCenter(self.path[-1]),
                                                                 0.3 * min(*self.grid.getSpacing()),
-                                                                15,
+                                                                5,#15,
                                                                 fill = True,
                                                                 batch = self.flowBatch,
                                                                 color = self.color  )

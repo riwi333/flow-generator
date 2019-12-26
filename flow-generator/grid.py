@@ -212,7 +212,8 @@ class Grid:
         """
 
         self.values[cell] = value
-        self.unoccupied.remove(cell)
+        if cell in self.unoccupied:
+            self.unoccupied.remove(cell)
 
     def resetCell(self, cell):
         """

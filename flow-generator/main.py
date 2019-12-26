@@ -2,6 +2,7 @@ import pyglet
 from grid import Grid
 from flow import Flow
 import generator
+import graphics
 from math import floor
 from random import random, shuffle
 import sys
@@ -11,7 +12,7 @@ run the path generation algorithm and display the resulting solved flow puzzle
 
 TODO:
     -   (eventually) add option to play puzzle with controls similar to 'tools/selfdraw.py'
-    
+
 """
 
 WINDOW_WIDTH = 960
@@ -55,6 +56,9 @@ assert len(COLORS) >= max([ MAX_ROWS, MAX_COLS ]), "Not enough colors for all gr
 # flag to decide whether the grid should be displayed solved or unsolved
 show_solved = True
 
+# flag to decide whether or not this grid will be played
+interactive = False
+
 # get the option to see the grid unsolved (solved by default)
 if "--unsolved" in sys.argv:
     sys.argv.remove("--unsolved")
@@ -63,6 +67,12 @@ if "--unsolved" in sys.argv:
 if "--solved" in sys.argv:
     sys.argv.remove("--solved")
     show_solved = True
+
+# get the option to play the grid (off by default)
+if "--interactive" in sys.argv:
+    sys.argv.remove("--interactive")
+    interactive = True
+    show_solved = False
 
 # get the grid dimensions from the command line arguments
 try:
@@ -113,7 +123,7 @@ assert len(COLORS) >= len(paths), "Not enough colors for this grid"
 # shuffle the list of colors so random ones are chosen
 shuffle(COLORS)
 
-flows = []
+flows, index = [], 0
 for path in paths:
     color = COLORS.pop()
 
@@ -122,27 +132,129 @@ for path in paths:
     if show_solved:
         flows.append(   Flow(   grid,
                                 color,
-                                len(flows),
+                                index,
                                 path = path   )  )
     else:
         flows.append(   Flow(   grid,
                                 color,
-                                len(flows),
+                                index,
                                 path = [ path[0] ]  ) )
         flows.append(   Flow(   grid,
                                 color,
-                                len(flows),
+                                index,
                                 path = [ path[-1] ]  ) )
 
-# update all the flows' graphics so they can be drawn
-for flow in flows:
-    flow.updateGraphics()
+    index += 1
+
+# create necessary objects for the interactive version
+if interactive:
+    # note that since each individual endpoint is considered a flow, each flow has two
+    # indices: 1) its flow index (endpoints that should be connected have the same flow
+    # index) and 2) its index in the flows[] list
+    flow_index = None
+    list_index = None
+
+    keys = {    pyglet.window.key.LEFT: ( -1, 0 ),
+                pyglet.window.key.RIGHT: ( 1, 0 ),
+                pyglet.window.key.DOWN: ( 0, -1 ),
+                pyglet.window.key.UP: ( 0, 1 )  }
+
+    endpoints = {}
+    for i in range(len(flows)):
+        endpoints[ flows[i].path[0] ] = ( flows[i].index, i )
+
+    cursor_cell = (0, 0)
+    while cursor_cell in endpoints:
+        cursor_cell = ( floor(cols * random()), floor(rows * random()) )
+    cursor_batch = pyglet.graphics.Batch()
+    cursor = graphics.generateCircle(   grid.getCellCenter(cursor_cell),
+                                        0.1 * min(grid.getSpacing()),
+                                        10,
+                                        fill = True,
+                                        batch = cursor_batch    )
+
+@window.event
+def on_key_press(symbol, modifiers):
+    # don't do anything with key presses if this isn't interactive
+    if interactive is False:
+        return
+
+    global cursor_cell, cursor, flow_index, list_index, flows, grid
+
+    if symbol == pyglet.window.key.SPACE:
+        # if we're not currently drawing a flow, start drawing with whatever flow
+        # the cursor is on top of
+        if list_index is None:
+            # TODO: make sure a flow hasn't already been drawn on the endpoint
+            if cursor_cell in endpoints:
+                flow_index, list_index = endpoints[cursor_cell]
+
+        # otherwise, if we're already drawing one, reset it back to its original
+        # state and unselect it
+        else:
+            flow = flows[list_index]
+
+            print(flow.flowBatch._dump_draw_list())
+
+            while len(flow.path) > 1:
+                flow.removeCell(flow.path[-1])
+
+            flow.updateGraphics()
+            print(flow.flowBatch._dump_draw_list())
+
+            flow_index, list_index = None, None
+
+    # if we're not currently drawing a flow, reset whatever flow the cursor is on top of
+    elif symbol == pyglet.window.key.BACKSPACE:
+        if list_index is None:
+            """
+            if cursor_cell in endpoints:
+                flow = flows[endpoints[cursor_cell][1]]
+
+                while len(flow.path) > 1:
+                    flow.removeCell(flow.path[-1])
+            """
+
+            pass
+
+    # move the cursor and connect flows with the arrow keys
+    elif symbol in keys:
+        next_cell = ( cursor_cell[0] + keys[symbol][0], cursor_cell[1] + keys[symbol][1] )
+
+        # make sure the new cursor is within the grid
+        if grid.inBounds(next_cell):
+            if list_index is None:
+                # if we're not drawing a flow, move the cursor to its new location
+                graphics.moveCircle(cursor, grid.getCellCenter(cursor_cell), grid.getCellCenter(next_cell))
+                cursor_cell = next_cell
+            else:
+                # if moving to the next cell will complete the flow, stop drawing
+                if next_cell in endpoints:
+                    if endpoints[next_cell][0] == flow_index:
+                        flows[list_index].addCell(next_cell)
+                        graphics.moveCircle(cursor, grid.getCellCenter(cursor_cell), grid.getCellCenter(next_cell))
+                        cursor_cell = next_cell
+
+                        flow_index, list_index = None, None
+
+                # otherwise just add this next empty cell to the current flow
+                else:
+                    if grid.isEmpty(next_cell):
+                        flows[list_index].addCell(next_cell)
+                        graphics.moveCircle(cursor, grid.getCellCenter(cursor_cell), grid.getCellCenter(next_cell))
+                        cursor_cell = next_cell
 
 @window.event
 def on_draw():
+    window.clear()
+
+    if interactive:
+        cursor_batch.draw()
+
     grid.draw()
 
     for flow in flows:
+        flow.updateGraphics()
         flow.draw()
 
 pyglet.app.run()

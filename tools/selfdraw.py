@@ -134,20 +134,19 @@ def on_key_press(symbol, modifiers):
             flow_selected = False
 
     # move the cursor and flows with the arrow keys
-    elif symbol in keys.keys():
+    elif symbol in keys:
         next_cell = ( cursor_cell[0] + keys[symbol][0], cursor_cell[1] + keys[symbol][1] )
 
         # make sure the calculated new cursor position is within the grid
         if grid.inBounds(next_cell):
-            # if we're currently drawing a flow, the cursor should not be able to pass
-            # through occupied cells
-            if ( flow_selected is True and grid.isEmpty(next_cell) ) or flow_selected is False:
+            # if we're currently drawing a flow, add this next empty cell to it
+            if flow_selected is True and grid.isEmpty(next_cell):
+                flows[index].addCell(next_cell)
                 graphics.moveCircle(cursor, grid.getCellCenter(cursor_cell), grid.getCellCenter(next_cell))
                 cursor_cell = next_cell
 
-        # if a flow is being drawn, add this next (empty, within the grid) cell to it
-        if flow_selected is True:
-            if grid.inBounds(cursor_cell) and grid.isEmpty(cursor_cell):
-                flows[index].addCell(cursor_cell)
+            elif flow_selected is False:
+                graphics.moveCircle(cursor, grid.getCellCenter(cursor_cell), grid.getCellCenter(next_cell))
+                cursor_cell = next_cell
 
 pyglet.app.run()
